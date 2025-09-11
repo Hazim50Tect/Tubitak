@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """
-TÜBİTAK Çağrı Crawler
-- Sadece "Ulusal Destek Programları" sayfasındaki
-  id=block-feza-gursey-views-block-cagrilar-block-2 div altındaki linkleri takip eder
-- Her linke gider, PDF/doküman indirir, metin kaydeder
-- Sonraki alt linkleri de recursive olarak işler
-- Dosyaları URL yapısına göre klasörlere kaydeder
-- Log dosyası üretir
+TÜBİTAK Çağrı Crawler (Filtreli)
+- Ana sayfa: sadece 'block-feza-gursey-views-block-cagrilar-block-2' altındaki linkleri alır
+- Alt sayfalar: sadece <article> içindeki
+  class='field field--name-field-bilesenler ... field__items' div altındaki linkleri takip eder
+- PDF/Word/Excel gibi dosyaları indirir
+- mailto: linkleri atlar
+- Recursive çalışır
 """
 
 import os
@@ -19,7 +19,7 @@ from playwright.sync_api import sync_playwright
 
 USER_AGENT = "Mozilla/5.0 (compatible; MyCrawler/1.0)"
 HEADERS = {"User-Agent": USER_AGENT}
-PDF_EXTENSIONS = (".pdf", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".zip")
+DOC_EXTENSIONS = (".pdf") # , ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".jpg"
 
 # ------------------- Log Helper -------------------
 
@@ -36,11 +36,13 @@ def normalize_url(base, href):
     if not href:
         return None
     href = href.strip()
+    if href.startswith("mailto:"):
+        return None
     href, _ = urldefrag(href)
     return urljoin(base, href)
 
-def is_probably_file(url):
-    return url.lower().endswith(PDF_EXTENSIONS)
+def is_document(url):
+    return url.lower().endswith(DOC_EXTENSIONS)
 
 def url_to_path(url, base_dir):
     parsed = urlparse(url)
@@ -80,20 +82,10 @@ def save_text(content, url, folder):
     except Exception as e:
         log(f"[ERROR] saving text from {url}: {e}")
 
-def extract_links(base_url, html):
-    soup = BeautifulSoup(html, "html.parser")
-    links = set()
-    for tag in soup.find_all("a"):
-        href = tag.get("href")
-        full = normalize_url(base_url, href)
-        if full:
-            links.add(full)
-    return links
-
 # ------------------- Crawler -------------------
 
 class Crawler:
-    def __init__(self, start_url, out_dir="tubitak_data", max_depth=2, rate_limit=1.0):
+    def __init__(self, start_url, out_dir="tubitak_data", max_depth=3, rate_limit=1.0):
         self.start_url = start_url
         self.out_dir = Path(out_dir)
         self.out_dir.mkdir(parents=True, exist_ok=True)
@@ -101,6 +93,24 @@ class Crawler:
         self.visited = set()
         self.rate_limit = rate_limit
         open("crawler.log", "w").close()
+
+    def extract_links_from_article(self, base_url, html):
+        soup = BeautifulSoup(html, "html.parser")
+        article = soup.find("article")
+        if not article:
+            return []
+        div = article.find(
+            "div",
+            class_="field field--name-field-bilesenler field--type-entity-reference-revisions field--label-hidden field__items"
+        )
+        if not div:
+            return []
+        links = set()
+        for tag in div.find_all("a", href=True):
+            full = normalize_url(base_url, tag["href"])
+            if full:
+                links.add(full)
+        return links
 
     def crawl_page(self, browser, url, depth=0):
         if depth > self.max_depth or url in self.visited:
@@ -119,10 +129,9 @@ class Crawler:
             folder = url_to_path(url, self.out_dir)
             save_text(html, url, folder)
 
-            # Sayfadaki tüm linkleri çıkar
-            links = extract_links(url, html)
+            links = self.extract_links_from_article(url, html)
             for link in links:
-                if is_probably_file(link):
+                if is_document(link):
                     download_file(link, folder)
                 else:
                     self.crawl_page(browser, link, depth + 1)
@@ -147,7 +156,7 @@ class Crawler:
             links = [normalize_url(self.start_url, a.get("href")) for a in div.find_all("a") if a.get("href")]
             page.close()
 
-            # 2) Sadece bu linkleri gez
+            # 2) Bu linkleri gez
             for link in links:
                 self.crawl_page(browser, link, depth=0)
 
@@ -160,7 +169,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--start", required=True, help="Başlangıç URL")
     parser.add_argument("--out", default="tubitak_data", help="Çıktı klasörü")
-    parser.add_argument("--depth", type=int, default=2, help="Maksimum derinlik")
+    parser.add_argument("--depth", type=int, default=3, help="Maksimum derinlik")
     parser.add_argument("--rate", type=float, default=1.0, help="Bekleme (saniye)")
     args = parser.parse_args()
 
