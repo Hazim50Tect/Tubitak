@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """
-TÜBİTAK Dinamik Recursive Crawler (Playwright + Chrome + Klasör Yapısı + Loglama)
-- Chrome üzerinde açılır, gezinmeleri canlı görebilirsin
-- Alt linkleri recursive tarar
-- Sayfa metinlerini bulunduğu URL yapısına uygun klasörlere kaydeder
-- PDF/dokümanları aynı klasöre indirir
-- Tüm işlemleri log dosyasına yazar
+TÜBİTAK Çağrı Crawler
+- Sadece "Ulusal Destek Programları" sayfasındaki
+  id=block-feza-gursey-views-block-cagrilar-block-2 div altındaki linkleri takip eder
+- Her linke gider, PDF/doküman indirir, metin kaydeder
+- Sonraki alt linkleri de recursive olarak işler
+- Dosyaları URL yapısına göre klasörlere kaydeder
+- Log dosyası üretir
 """
 
 import os
@@ -35,20 +36,13 @@ def normalize_url(base, href):
     if not href:
         return None
     href = href.strip()
-    href, _ = urldefrag(href)  # fragment kaldır
+    href, _ = urldefrag(href)
     return urljoin(base, href)
-
-def same_domain(a, b):
-    return urlparse(a).netloc == urlparse(b).netloc
 
 def is_probably_file(url):
     return url.lower().endswith(PDF_EXTENSIONS)
 
 def url_to_path(url, base_dir):
-    """
-    URL'den klasör yapısı çıkarır: domain + path
-    Örn: https://tubitak.gov.tr/tr/destekler/sanayi -> tubitak.gov.tr/tr/destekler/sanayi/
-    """
     parsed = urlparse(url)
     domain = parsed.netloc
     path = parsed.path.strip("/")
@@ -89,14 +83,9 @@ def save_text(content, url, folder):
 def extract_links(base_url, html):
     soup = BeautifulSoup(html, "html.parser")
     links = set()
-    for tag in soup.find_all(["a", "link", "iframe", "area"]):
-        href = tag.get("href") or tag.get("src")
+    for tag in soup.find_all("a"):
+        href = tag.get("href")
         full = normalize_url(base_url, href)
-        if full:
-            links.add(full)
-    for tag in soup.find_all(["embed", "object"]):
-        src = tag.get("data") or tag.get("src")
-        full = normalize_url(base_url, src)
         if full:
             links.add(full)
     return links
@@ -104,18 +93,16 @@ def extract_links(base_url, html):
 # ------------------- Crawler -------------------
 
 class Crawler:
-    def __init__(self, start_url, out_dir="tubitak_data", max_depth=3, rate_limit=1.0):
+    def __init__(self, start_url, out_dir="tubitak_data", max_depth=2, rate_limit=1.0):
         self.start_url = start_url
         self.out_dir = Path(out_dir)
         self.out_dir.mkdir(parents=True, exist_ok=True)
         self.max_depth = max_depth
         self.visited = set()
         self.rate_limit = rate_limit
-        self.allowed_domain = urlparse(start_url).netloc
-        # log dosyasını temizle
         open("crawler.log", "w").close()
 
-    def crawl(self, browser, url, depth=0):
+    def crawl_page(self, browser, url, depth=0):
         if depth > self.max_depth or url in self.visited:
             return
         self.visited.add(url)
@@ -130,29 +117,40 @@ class Crawler:
             page.close()
 
             folder = url_to_path(url, self.out_dir)
-
-            # Metni kaydet
             save_text(html, url, folder)
 
-            # Linkleri çıkar
+            # Sayfadaki tüm linkleri çıkar
             links = extract_links(url, html)
             for link in links:
-                if not same_domain(self.start_url, link):
-                    continue
                 if is_probably_file(link):
                     download_file(link, folder)
                 else:
-                    self.crawl(browser, link, depth + 1)
+                    self.crawl_page(browser, link, depth + 1)
 
         except Exception as e:
             log(f"[ERROR] visiting {url}: {e}")
 
     def run(self):
         with sync_playwright() as p:
-            browser = p.chromium.launch(
-                headless=False, channel="chrome", slow_mo=500
-            )  # canlı izleme
-            self.crawl(browser, self.start_url, 0)
+            browser = p.chromium.launch(headless=False, channel="chrome", slow_mo=500)
+
+            # 1) Ana sayfadan sadece ilgili DIV'deki linkleri topla
+            page = browser.new_page()
+            page.set_extra_http_headers({"User-Agent": USER_AGENT})
+            page.goto(self.start_url, wait_until="networkidle", timeout=60000)
+            html = page.content()
+            soup = BeautifulSoup(html, "html.parser")
+            div = soup.find("div", id="block-feza-gursey-views-block-cagrilar-block-2")
+            if not div:
+                log("[ERROR] İlgili div bulunamadı!")
+                return
+            links = [normalize_url(self.start_url, a.get("href")) for a in div.find_all("a") if a.get("href")]
+            page.close()
+
+            # 2) Sadece bu linkleri gez
+            for link in links:
+                self.crawl_page(browser, link, depth=0)
+
             browser.close()
 
 # ------------------- CLI -------------------
