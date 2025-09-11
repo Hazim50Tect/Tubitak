@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 """
-TÜBİTAK Çağrı Crawler (Filtreli)
+TÜBİTAK Çağrı Crawler (Filtreli + Ek Şartlar)
 - Ana sayfa: sadece 'block-feza-gursey-views-block-cagrilar-block-2' altındaki linkleri alır
 - Alt sayfalar: sadece <article> içindeki
   class='field field--name-field-bilesenler ... field__items' div altındaki linkleri takip eder
-- PDF/Word/Excel gibi dosyaları indirir
-- mailto: linkleri atlar
-- Recursive çalışır
+- Sadece https://tubitak.gov.tr/ ile başlayan linkler işlenir
+- 'mailto:' ve içinde 'mali' geçen linkler/dosyalar atlanır
+- PDF/Word/Excel dosyaları indirilir
+- index.txt: sadece <article> içeriğini kaydeder
 """
 
 import os
@@ -19,7 +20,7 @@ from playwright.sync_api import sync_playwright
 
 USER_AGENT = "Mozilla/5.0 (compatible; MyCrawler/1.0)"
 HEADERS = {"User-Agent": USER_AGENT}
-DOC_EXTENSIONS = (".pdf") # , ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".jpg"
+DOC_EXTENSIONS = (".pdf")
 
 # ------------------- Log Helper -------------------
 
@@ -39,7 +40,15 @@ def normalize_url(base, href):
     if href.startswith("mailto:"):
         return None
     href, _ = urldefrag(href)
-    return urljoin(base, href)
+    full = urljoin(base, href)
+
+    # sadece tubitak.gov.tr domaini
+    if not full.startswith("https://tubitak.gov.tr/"):
+        return None
+    # mali ifadesi varsa atla
+    if "mali" in full.lower():
+        return None
+    return full
 
 def is_document(url):
     return url.lower().endswith(DOC_EXTENSIONS)
@@ -56,9 +65,15 @@ def url_to_path(url, base_dir):
 
 def download_file(url, folder):
     try:
+        if "mali" in url.lower():
+            log(f"[SKIP] mali içeriyor, indirilmedi: {url}")
+            return
         r = requests.get(url, headers=HEADERS, stream=True, timeout=30)
         if r.status_code == 200:
             filename = os.path.basename(urlparse(url).path) or "downloaded_file"
+            if "mali" in filename.lower():
+                log(f"[SKIP] mali içeriyor, indirilmedi: {url}")
+                return
             path = folder / filename
             i = 1
             while path.exists():
@@ -74,7 +89,10 @@ def download_file(url, folder):
 def save_text(content, url, folder):
     try:
         soup = BeautifulSoup(content, "html.parser")
-        text = soup.get_text(separator="\n", strip=True)
+        article = soup.find("article")
+        if not article:
+            return
+        text = article.get_text(separator="\n", strip=True)
         path = folder / "index.txt"
         with open(path, "w", encoding="utf-8") as f:
             f.write(text)
@@ -154,6 +172,7 @@ class Crawler:
                 log("[ERROR] İlgili div bulunamadı!")
                 return
             links = [normalize_url(self.start_url, a.get("href")) for a in div.find_all("a") if a.get("href")]
+            links = [l for l in links if l]  # None'ları filtrele
             page.close()
 
             # 2) Bu linkleri gez
