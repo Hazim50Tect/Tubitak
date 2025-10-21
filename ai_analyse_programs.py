@@ -1,30 +1,30 @@
 import requests
 import json
 import time
+import re
+import os
 
 # AnythingLLM API ayarları
-API_KEY = "R212Y2R-Z494M7R-J8Q01DP-JY4DV4N"
+API_KEY = os.getenv("ANYTHINGLLM_API_KEY", "R212Y2R-Z494M7R-J8Q01DP-JY4DV4N")
 BASE_URL = "http://localhost:3001/api/v1"
 
 headers = {"Authorization": f"Bearer {API_KEY}", "Content-Type": "application/json"}
 
+HTML_FILE = "ai_analyse_results.html"
+
 
 def extract_text(text: str) -> str:
-    """
-    <document_metadata>...</document_metadata> bloklarını atıp
-    kalan metni temizler ve satır sonlarını düzleştirir.
-    """
+    """<document_metadata> bloklarını temizler ve satır sonlarını düzleştirir."""
     if not text:
         return ""
-    # metadata kısmını sil
     cleaned = re.sub(r"<document_metadata>.*?</document_metadata>", "", text, flags=re.DOTALL)
-    # tüm \n ve fazla boşlukları temizle
     cleaned = re.sub(r"\s*\n\s*", " ", cleaned)
-    cleaned = re.sub(r"\s{2,}", " ", cleaned)  # art arda boşlukları tek boşluk yap
+    cleaned = re.sub(r"\s{2,}", " ", cleaned)
     return cleaned.strip()
 
 
 def clean_response(raw, import_sources=False):
+    """AnythingLLM yanıtını temizler ve sources varsa ekler."""
     result = {"response": raw.get("textResponse"), "metrics": raw.get("metrics"), "reasoning": raw.get("reasoning")}
     if import_sources:
         result["sources"] = [
@@ -42,34 +42,27 @@ def clean_response(raw, import_sources=False):
 
 
 def send_program_to_anythingllm(program_name, applicant_requirements, program_index):
-    """
-    Tek bir programı AnythingLLM'e gönderir
-    """
-    # Program bilgilerini içeren mesaj oluştur
+    """Tek bir programı AnythingLLM'e gönderir ve yanıtı döndürür."""
     message = f"""
-        Program Adı: {program_name}
+Program Adı: {program_name}
 
-        Başvuru Koşulları: {applicant_requirements}
+Başvuru Koşulları: {applicant_requirements}
 
-        Bu program büyük ölçekli kurumsal bir Ar-Ge Merkezi için uygun mu?
-        """
-
+Bu program büyük ölçekli kurumsal bir Ar-Ge Merkezi için uygun mu?
+"""
     data = {"message": message, "reset": False, "mode": "chat"}
 
     try:
         print(f"[{program_index}] Gönderiliyor: {program_name}")
-
-        print(f"[{program_index}] Gönderilen mesaj: {message}")
-        response = requests.post(f"{BASE_URL}/workspace/deneme/chat", headers=headers, json=data)
+        response = requests.post(f"{BASE_URL}/workspace/deneme/chat", headers=headers, json=data, timeout=60)
 
         if response.status_code == 200:
             raw = response.json()
             cleaned = clean_response(raw, import_sources=True)
 
             print(f"[{program_index}] Başarılı: {program_name}")
-            print(f"Yanıt: {cleaned['response']}")
+            print(f"Yanıt: {cleaned['response'][:100]}...")  # sadece özet
             print("-" * 80)
-
             return cleaned
         else:
             print(f"[{program_index}] Hata: {program_name} - Status Code: {response.status_code}")
@@ -79,6 +72,74 @@ def send_program_to_anythingllm(program_name, applicant_requirements, program_in
     except Exception as e:
         print(f"[{program_index}] Exception: {program_name} - {str(e)}")
         return None
+
+
+def append_to_html(item, html_file=HTML_FILE):
+    """
+    HTML dosyasına eklerken:
+    - Markdown işaretlerini temizler (#, *, **)
+    - | ve --- ile yazılmış tablo varsa gerçek HTML <table> yapar
+    - Satır sonlarını <br> ile korur
+    """
+    text = item["analysis"]
+
+    # Tablo var mı kontrol et
+    table_blocks = []
+    lines = text.split("\n")
+    non_table_lines = []
+    current_table = []
+
+    for line in lines:
+        if "|" in line:
+            current_table.append(line)
+        else:
+            if current_table:
+                table_blocks.append(current_table)
+                current_table = []
+            non_table_lines.append(line)
+    if current_table:
+        table_blocks.append(current_table)
+
+    # Tabloyu HTML yap
+    html_tables = []
+    for table in table_blocks:
+        html_table = ["<table border='1' cellspacing='0' cellpadding='5'>"]
+        for i, row in enumerate(table):
+            cells = [c.strip() for c in row.split("|") if c.strip()]
+            if i == 0 or all(re.match(r"^-+$", c) for c in cells):
+                html_table.append("<tr>" + "".join(f"<th>{c}</th>" for c in cells) + "</tr>")
+            else:
+                html_table.append("<tr>" + "".join(f"<td>{c}</td>" for c in cells) + "</tr>")
+        html_table.append("</table>")
+        html_tables.append("\n".join(html_table))
+
+    # Markdown işaretlerini temizle
+    clean_text = re.sub(r"[*#]+", "", "\n".join(non_table_lines)).strip()
+    clean_text = clean_text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+    clean_text = clean_text.replace("\n", "<br>")
+
+    # HTML yaz
+    with open(html_file, "a", encoding="utf-8") as f:
+        f.write(f"<h2>{item['program_name']}</h2>\n")
+        f.write(f"<p><strong>Başvuru Koşulları:</strong> {item['applicant_requirements']}</p>\n")
+        f.write(f"<p>{clean_text}</p>\n")
+        for table_html in html_tables:
+            f.write(f"{table_html}\n")
+        f.write("<hr>\n\n")
+
+
+def init_html(html_file=HTML_FILE):
+    """HTML dosyasını başlatır."""
+    with open(html_file, "w", encoding="utf-8") as f:
+        f.write("<!DOCTYPE html>\n<html lang='tr'>\n<head>\n<meta charset='utf-8'>\n")
+        f.write("<title>Ar-Ge Program Analizleri</title>\n</head>\n<body>\n")
+        f.write("<h1>TÜBİTAK Ar-Ge Program Analizleri</h1>\n")
+
+
+def close_html(html_file=HTML_FILE):
+    """HTML dosyasını kapatır."""
+    with open(html_file, "a", encoding="utf-8") as f:
+        f.write("</body>\n</html>")
 
 
 def main():
@@ -97,49 +158,54 @@ def main():
     print(f"Toplam {len(programs)} program bulundu.")
     print("=" * 80)
 
-    # Sonuçları saklamak için liste
     results = []
 
-    # Tüm programları sırayla gönder
+    # HTML dosyasını başlat
+    init_html()
+
     for index, program in enumerate(programs, 1):
         program_name = program.get("program_name", "Bilinmeyen Program")
         applicant_requirements = program.get("applicant_requirements", "Veri bulunamadı")
         status = program.get("status", "unknown")
 
-        # Sadece başarılı olan programları gönder
         if status == "success" and applicant_requirements != "Veri bulunamadı":
             result = send_program_to_anythingllm(program_name, applicant_requirements, index)
 
-            # Sonucu kaydet
             if result:
-                # \n karakterlerini gerçek satır sonlarına çevir
                 analysis_text = result.get("response", "").replace("\\n", "\n")
+                item = {
+                    "program_name": program_name,
+                    "applicant_requirements": applicant_requirements,
+                    "analysis": analysis_text,
+                }
 
-                results.append(
-                    {
-                        "program_name": program_name,
-                        "applicant_requirements": applicant_requirements,
-                        "analysis": analysis_text,
-                    }
-                )
+                results.append(item)
+                append_to_html(item)
+
             else:
-                results.append({"program_name": program_name, "applicant_requirements": applicant_requirements, "analysis": "Hata: Analiz yapılamadı"})
+                error_item = {
+                    "program_name": program_name,
+                    "applicant_requirements": applicant_requirements,
+                    "analysis": "Hata: Analiz yapılamadı",
+                }
+                results.append(error_item)
+                append_to_html(error_item)
 
-            # API'ye çok hızlı istek atmamak için kısa bir bekleme
             time.sleep(1)
         else:
             print(f"[{index}] Atlanıyor: {program_name} - Status: {status}")
             print("-" * 80)
 
-    # Sonuçları JSON dosyasına kaydet
+    # HTML dosyasını kapat
+    close_html()
+
+    # JSON dosyasına kaydet
     with open("ai_analyse_results.json", "w", encoding="utf-8") as f:
         json.dump(results, f, ensure_ascii=False, indent=2)
 
     print("Tüm programlar işlendi!")
-    print(f"Sonuçlar 'ai_analyse_results.json' dosyasına kaydedildi.")
+    print(f"Sonuçlar '{HTML_FILE}' ve 'ai_analyse_results.json' dosyalarına kaydedildi.")
 
 
 if __name__ == "__main__":
-    import re  # extract_text fonksiyonu için gerekli
-
     main()
