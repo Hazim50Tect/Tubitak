@@ -54,7 +54,7 @@ Bu program büyük ölçekli kurumsal bir Ar-Ge Merkezi için uygun mu?
 
     try:
         print(f"[{program_index}] Gönderiliyor: {program_name}")
-        response = requests.post(f"{BASE_URL}/workspace/deneme/chat", headers=headers, json=data, timeout=60)
+        response = requests.post(f"{BASE_URL}/workspace/tubitak-yeni/chat", headers=headers, json=data, timeout=60)
 
         if response.status_code == 200:
             raw = response.json()
