@@ -3,7 +3,7 @@ import time
 from workspace_manager import create_new_workspace
 from file_manager import get_next_html_filename, get_next_json_filename
 from ai_analyzer import send_program_to_anythingllm, extract_score_from_response, update_final_mean_file
-from output_manager import init_html, close_html, append_to_html
+from output_manager import init_html, close_html, append_to_html, init_json, append_to_json, close_json
 from scraper_manager import check_data_file, scrape_tubitak_data
 from active_calls_manager import scrape_active_calls, check_active_calls_file
 
@@ -65,6 +65,9 @@ def main():
     # HTML dosyasını başlat
     init_html(html_file)
 
+    # JSON dosyasını başlat
+    init_json(json_file)
+
     for index, program in enumerate(programs, 1):
         program_name = program.get("program_name", "Bilinmeyen Program")
         applicant_requirements = program.get("applicant_requirements", "Veri bulunamadı")
@@ -91,6 +94,7 @@ def main():
 
                 results.append(item)
                 append_to_html(item, html_file)
+                append_to_json(item, json_file)
 
             else:
                 error_item = {
@@ -100,6 +104,7 @@ def main():
                 }
                 results.append(error_item)
                 append_to_html(error_item, html_file)
+                append_to_json(error_item, json_file)
 
             time.sleep(1)
         else:
@@ -109,9 +114,8 @@ def main():
     # HTML dosyasını kapat
     close_html(html_file)
 
-    # JSON dosyasına kaydet
-    with open(json_file, "w", encoding="utf-8") as f:
-        json.dump(results, f, ensure_ascii=False, indent=2)
+    # JSON dosyasını kapat
+    close_json(json_file)
 
     print("Tüm programlar işlendi!")
     print(f"Sonuçlar '{html_file}' ve '{json_file}' dosyalarına kaydedildi.")

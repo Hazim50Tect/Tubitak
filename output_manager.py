@@ -67,3 +67,43 @@ def close_html(html_file):
     """HTML dosyasını kapatır."""
     with open(html_file, "a", encoding="utf-8") as f:
         f.write("</body>\n</html>")
+
+
+def init_json(json_file):
+    """JSON dosyasını başlatır."""
+    with open(json_file, "w", encoding="utf-8") as f:
+        f.write("[\n")
+
+
+def append_to_json(item, json_file):
+    """JSON dosyasına yeni bir item ekler."""
+    import json
+
+    # Mevcut dosyayı oku
+    try:
+        with open(json_file, "r", encoding="utf-8") as f:
+            content = f.read().strip()
+    except FileNotFoundError:
+        content = ""
+
+    # Eğer dosya boş değilse, son elemandan virgülü kaldır ve yeni virgül ekle
+    if content and not content.endswith("["):
+        # Son ] karakterini kaldır
+        if content.endswith("]"):
+            content = content[:-1]
+        # Yeni item ekle
+        with open(json_file, "w", encoding="utf-8") as f:
+            f.write(content)
+            f.write(",\n")
+            json.dump(item, f, ensure_ascii=False, indent=2)
+            f.write("\n]")
+    else:
+        # İlk item
+        with open(json_file, "w", encoding="utf-8") as f:
+            json.dump(item, f, ensure_ascii=False, indent=2)
+            f.write("\n]")
+
+
+def close_json(json_file):
+    """JSON dosyasını kapatır (zaten kapatılmış olmalı)."""
+    pass  # append_to_json zaten dosyayı kapatıyor
