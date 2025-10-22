@@ -5,9 +5,15 @@ from file_manager import get_next_html_filename, get_next_json_filename
 from ai_analyzer import send_program_to_anythingllm, extract_score_from_response, update_final_mean_file
 from output_manager import init_html, close_html, append_to_html
 from scraper_manager import check_data_file, scrape_tubitak_data
+from active_calls_manager import scrape_active_calls, check_active_calls_file
 
 
 def main():
+    # Aktif çağrıları çek
+    print("🔄 Aktif çağrılar kontrol ediliyor...")
+    active_calls_data = scrape_active_calls()
+    print("=" * 80)
+
     # Veri dosyası kontrolü ve otomatik çekme
     if not check_data_file():
         print("📥 tubitak_rag_data.json dosyası bulunamadı!")
@@ -44,6 +50,14 @@ def main():
 
     programs = data.get("programs", [])
     print(f"Toplam {len(programs)} program bulundu.")
+
+    # Aktif çağrıları da ekle
+    if active_calls_data:
+        active_programs = active_calls_data.get("programs", [])
+        programs.extend(active_programs)
+        print(f"Aktif çağrılardan {len(active_programs)} program eklendi.")
+
+    print(f"Toplam {len(programs)} program analiz edilecek.")
     print("=" * 80)
 
     results = []

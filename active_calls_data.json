@@ -1,0 +1,35 @@
+{
+  "source": "TÜBİTAK Aktif Çağrılar",
+  "url": "https://tubitak.gov.tr/tr/destekler/sanayi/ulusal-destek-programlari",
+  "extraction_date": "2025-10-22 16:04:40",
+  "programs": [
+    {
+      "program_name": "1612 - BiGG - 1.Aşama Uygulayıcı Kuruluş Çağrısı",
+      "program_url": "https://tubitak.gov.tr/tr/destekler/destek/sanayi/ulusal-destek-programlari/cagri-1612-bigg-1asama-uygulayici-kurulus-cagrisi",
+      "applicant_requirements": "Aktif çağrı - detay çekilmedi",
+      "status": "active_call",
+      "found_date": "2025-10-22 16:04:40"
+    },
+    {
+      "program_name": "1707 - Sipariş Ar-Ge 2025 Yılı Üçüncü Dönem Çağrıları Açıldı",
+      "program_url": "https://tubitak.gov.tr/tr/destekler/destek/sanayi/ulusal-destek-programlari/cagri-1707-siparis-ar-ge-2025-yili-ucuncu-donem-cagrilari-acildi",
+      "applicant_requirements": "Aktif çağrı - detay çekilmedi",
+      "status": "active_call",
+      "found_date": "2025-10-22 16:04:40"
+    },
+    {
+      "program_name": "1812 - 3. Aşama 2025 – 1 BİGG+ Tohum Yatırım Çağrısı",
+      "program_url": "https://tubitak.gov.tr/tr/destekler/destek/sanayi/ulusal-destek-programlari/cagri-1812-3-asama-2025-1-bigg-tohum-yatirim-cagrisi",
+      "applicant_requirements": "Aktif çağrı - detay çekilmedi",
+      "status": "active_call",
+      "found_date": "2025-10-22 16:04:40"
+    },
+    {
+      "program_name": "1831 Yeşil İnovasyon Teknoloji Mentörlük Çağrısı",
+      "program_url": "https://tubitak.gov.tr/tr/destekler/destek/sanayi/ulusal-destek-programlari/cagri-1831-yesil-inovasyon-teknoloji-mentorluk-cagrisi",
+      "applicant_requirements": "Aktif çağrı - detay çekilmedi",
+      "status": "active_call",
+      "found_date": "2025-10-22 16:04:40"
+    }
+  ]
+}
