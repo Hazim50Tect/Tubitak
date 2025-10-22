@@ -4,9 +4,20 @@ from workspace_manager import create_new_workspace
 from file_manager import get_next_html_filename, get_next_json_filename
 from ai_analyzer import send_program_to_anythingllm, extract_score_from_response, update_final_mean_file
 from output_manager import init_html, close_html, append_to_html
+from scraper_manager import check_data_file, scrape_tubitak_data
 
 
 def main():
+    # Veri dosyası kontrolü ve otomatik çekme
+    if not check_data_file():
+        print("📥 tubitak_rag_data.json dosyası bulunamadı!")
+        print("🔄 TÜBİTAK verileri otomatik olarak çekiliyor...")
+        scrape_tubitak_data()
+        print("=" * 80)
+    else:
+        print("✅ tubitak_rag_data.json dosyası mevcut.")
+        print("=" * 80)
+
     # Yeni workspace oluştur
     workspace_slug = create_new_workspace()
     if not workspace_slug:

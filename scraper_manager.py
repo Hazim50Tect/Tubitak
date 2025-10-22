@@ -3,6 +3,7 @@ from bs4 import BeautifulSoup
 import time
 import re
 import json
+import os
 
 BASE_URL = "https://tubitak.gov.tr"
 LIST_URL = f"{BASE_URL}/tr/destekler/sanayi/ulusal-destek-programlari"
@@ -92,7 +93,10 @@ def get_applicant_info(url):
     return None
 
 
-def main():
+def scrape_tubitak_data():
+    """TÜBİTAK verilerini çeker ve JSON dosyasına kaydeder."""
+    print("🔍 TÜBİTAK verileri çekiliyor...")
+
     calls = get_call_links_and_names()
     print(f"🔗 {len(calls)} çağrı bulundu.\n")
 
@@ -121,19 +125,16 @@ def main():
         rag_data["programs"].append(program_data)
         time.sleep(2)
 
-    # JSON çıktısı
-    print("\n" + "=" * 80)
-    print("JSON ÇIKTISI (RAG için uygun format):")
-    print("=" * 80)
-    print(json.dumps(rag_data, ensure_ascii=False, indent=2))
-
-    # JSON dosyasına da kaydet
+    # JSON dosyasına kaydet
     with open("tubitak_rag_data.json", "w", encoding="utf-8") as f:
         json.dump(rag_data, f, ensure_ascii=False, indent=2)
 
     print(f"\n✅ JSON dosyası 'tubitak_rag_data.json' olarak kaydedildi.")
     print("✅ Tüm çağrılar işlendi.")
 
+    return rag_data
 
-if __name__ == "__main__":
-    main()
+
+def check_data_file():
+    """tubitak_rag_data.json dosyasının varlığını kontrol eder."""
+    return os.path.exists("tubitak_rag_data.json")
