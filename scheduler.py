@@ -226,6 +226,7 @@ def start_scheduler():
     schedule.every().day.at("12:00").do(run_scheduled_analysis)
     schedule.every().day.at("17:00").do(run_scheduled_analysis)
     schedule.every().day.at("00:00").do(run_scheduled_analysis)
+    schedule.every().day.at("17:10").do(run_scheduled_analysis)
 
     # İlk analizi hemen çalıştır
     print("🔄 İlk analiz hemen çalıştırılıyor...")
