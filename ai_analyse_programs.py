@@ -30,7 +30,7 @@ def get_next_html_filename():
             # "ai_analyse_results" + sayı + ".html" formatından sayıyı çıkar
             try:
                 # "ai_analyse_results" = 20 karakter
-                num_part = filename[20:-5]  # ".html" = 5 karakter
+                num_part = filename[18:-5]  # ".html" = 5 karakter
                 if num_part.isdigit():
                     existing_numbers.append(int(num_part))
             except (ValueError, IndexError):
@@ -62,7 +62,7 @@ def get_next_json_filename():
             # "ai_analyse_results" + sayı + ".json" formatından sayıyı çıkar
             try:
                 # "ai_analyse_results" = 20 karakter
-                num_part = filename[20:-5]  # ".json" = 5 karakter
+                num_part = filename[18:-5]  # ".json" = 5 karakter
                 if num_part.isdigit():
                     existing_numbers.append(int(num_part))
             except (ValueError, IndexError):
@@ -79,6 +79,7 @@ def get_next_json_filename():
 # HTML ve JSON dosya adlarını dinamik olarak belirle
 HTML_FILE = get_next_html_filename()
 JSON_FILE = get_next_json_filename()
+FINAL_MEAN_FILE = "FINAL_ai_results_mean.json"
 
 
 def get_next_workspace_name():
@@ -145,6 +146,74 @@ def create_new_workspace():
     except Exception as e:
         print(f"Workspace oluşturma sırasında hata: {str(e)}")
         return None
+
+
+def extract_score_from_response(response_text: str) -> float:
+    """AI yanıtından uygunluk skorunu çıkarır."""
+    import re
+
+    if not response_text:
+        return None
+
+    # "Uygunluk Skoru" veya "Skor" kelimelerini ara
+    score_patterns = [
+        r"Uygunluk Skoru[:\s]*(\d+(?:\.\d+)?)",
+        r"Skor[:\s]*(\d+(?:\.\d+)?)",
+        r"(\d+(?:\.\d+)?)\s*\/\s*1",  # X/1 formatı
+        r"(\d+(?:\.\d+)?)\s*\/\s*10",  # X/10 formatı
+        r"(\d+(?:\.\d+)?)\s*\/\s*100",  # X/100 formatı
+    ]
+
+    for pattern in score_patterns:
+        match = re.search(pattern, response_text, re.IGNORECASE)
+        if match:
+            score = float(match.group(1))
+            # Eğer skor 1'den büyükse, 1'e normalize et
+            if score > 1:
+                if score <= 10:
+                    score = score / 10
+                elif score <= 100:
+                    score = score / 100
+                else:
+                    score = 1.0
+            return score
+
+    return None
+
+
+def update_final_mean_file(program_name: str, score: float):
+    """FINAL_ai_results_mean.json dosyasını günceller."""
+    import os
+
+    # Mevcut dosyayı oku
+    if os.path.exists(FINAL_MEAN_FILE):
+        try:
+            with open(FINAL_MEAN_FILE, "r", encoding="utf-8") as f:
+                data = json.load(f)
+        except (json.JSONDecodeError, FileNotFoundError):
+            data = {}
+    else:
+        data = {}
+
+    # Program için skor listesini güncelle
+    if program_name not in data:
+        data[program_name] = {"scores": [], "mean": 0.0}
+
+    # Yeni skoru ekle
+    data[program_name]["scores"].append(score)
+
+    # Ortalamayı hesapla
+    scores = data[program_name]["scores"]
+    mean_score = sum(scores) / len(scores)
+    data[program_name]["mean"] = round(mean_score, 3)
+
+    # Dosyayı kaydet
+    try:
+        with open(FINAL_MEAN_FILE, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+        print(f"Ortalama güncellendi: {program_name} - Yeni skor: {score}, Ortalama: {mean_score}")
+    except Exception as e:
+        print(f"Ortalama dosyası kaydedilemedi: {str(e)}")
 
 
 def extract_text(text: str) -> str:
@@ -316,6 +385,14 @@ def main():
 
             if result:
                 analysis_text = result.get("response", "").replace("\\n", "\n")
+
+                # AI yanıtından skoru çıkar ve kaydet
+                score = extract_score_from_response(analysis_text)
+                if score is not None:
+                    update_final_mean_file(program_name, score)
+                else:
+                    print(f"[{index}] Skor bulunamadı: {program_name}")
+
                 item = {
                     "program_name": program_name,
                     "applicant_requirements": applicant_requirements,
