@@ -3,6 +3,9 @@
     "scores": [
       0.0,
       0.0,
+      0.0,
+      0.0,
+      0.0,
       0.0
     ],
     "mean": 0.0
@@ -11,20 +14,29 @@
     "scores": [
       0.9,
       0.5,
-      1.0
+      1.0,
+      1.0,
+      0.4,
+      0.8
     ],
-    "mean": 0.8
+    "mean": 0.767
   },
   "1505 - Üniversite-Sanayi İşbirliği Destek Programı": {
     "scores": [
       1.0,
       1.0,
-      1.0
+      1.0,
+      1.0,
+      0.8,
+      0.9
     ],
-    "mean": 1.0
+    "mean": 0.95
   },
   "1507 - TÜBİTAK KOBİ Ar-Ge Başlangıç Destek Programı": {
     "scores": [
+      0.0,
+      0.0,
+      0.0,
       0.0,
       0.0,
       0.0
@@ -35,12 +47,18 @@
     "scores": [
       1.0,
       1.0,
-      1.0
+      1.0,
+      1.0,
+      0.9,
+      0.95
     ],
-    "mean": 1.0
+    "mean": 0.975
   },
   "1512 - Girişimcilik Destek Programı (BiGG)": {
     "scores": [
+      0.0,
+      0.0,
+      0.0,
       0.0,
       0.0,
       0.0
@@ -51,12 +69,18 @@
     "scores": [
       0.0,
       0.0,
+      0.0,
+      0.0,
+      0.0,
       0.0
     ],
     "mean": 0.0
   },
   "1514 - Girişim Sermayesi Destekleme Programı (Tech-InvesTR)": {
     "scores": [
+      0.0,
+      0.0,
+      0.0,
       0.0,
       0.0,
       0.0
@@ -67,36 +91,51 @@
     "scores": [
       0.95,
       0.0,
-      1.0
+      1.0,
+      0.0,
+      0.8,
+      0.0
     ],
-    "mean": 0.65
+    "mean": 0.458
   },
   "1601 - Yenilik Girişimcilik Alanlarında Kapasite Artırılmasına Yönelik D.P.": {
     "scores": [
       0.9,
       0.8,
-      1.0
+      1.0,
+      1.0,
+      0.6,
+      0.9
     ],
-    "mean": 0.9
+    "mean": 0.867
   },
   "1602 - TÜBİTAK Patent Destek Programı": {
     "scores": [
       0.8,
       0.5,
-      1.0
+      1.0,
+      1.0,
+      0.7,
+      0.7
     ],
-    "mean": 0.767
+    "mean": 0.783
   },
   "1612 - BiGG - 1.Aşama Uygulayıcı Kuruluş Çağrısı": {
     "scores": [
       0.0,
       0.0,
+      0.0,
+      0.0,
+      0.2,
       0.0
     ],
-    "mean": 0.0
+    "mean": 0.033
   },
   "1613 - Teknoloji Transferi Profesyoneli Çağrısı": {
     "scores": [
+      0.0,
+      0.0,
+      0.0,
       0.0,
       0.0,
       0.0
@@ -107,12 +146,18 @@
     "scores": [
       1.0,
       1.0,
+      1.0,
+      1.0,
+      0.9,
       1.0
     ],
-    "mean": 1.0
+    "mean": 0.983
   },
   "1702 - Patent Tabanlı Teknoloji Transferi Destekleme Çağrısı": {
     "scores": [
+      0.0,
+      0.0,
+      0.0,
       0.0,
       0.0,
       0.0
@@ -123,20 +168,29 @@
     "scores": [
       0.0,
       0.0,
+      0.0,
+      0.5,
+      0.0,
       0.0
     ],
-    "mean": 0.0
+    "mean": 0.083
   },
   "1711 - Yapay Zekâ Ekosistem Çağrısı": {
     "scores": [
       0.8,
       0.8,
-      0.9
+      0.9,
+      1.0,
+      0.7,
+      0.8
     ],
     "mean": 0.833
   },
   "1812 - Yatırım Tabanlı Girişimcilik Destek Programı (BiGG Yatırım)": {
     "scores": [
+      0.0,
+      0.0,
+      0.0,
       0.0,
       0.0,
       0.0
@@ -147,6 +201,9 @@
     "scores": [
       0.0,
       0.0,
+      0.0,
+      0.0,
+      0.0,
       0.0
     ],
     "mean": 0.0
@@ -155,16 +212,22 @@
     "scores": [
       0.95,
       1.0,
-      1.0
+      1.0,
+      1.0,
+      0.9,
+      0.9
     ],
-    "mean": 0.983
+    "mean": 0.958
   },
   "1833 - SAYEM Yeşil Dönüşüm Çağrısı": {
     "scores": [
       0.7,
       0.5,
-      0.5
+      0.5,
+      0.0,
+      0.4,
+      0.9
     ],
-    "mean": 0.567
+    "mean": 0.5
   }
 }
