@@ -10,7 +10,75 @@ BASE_URL = "http://localhost:3001/api/v1"
 
 headers = {"Authorization": f"Bearer {API_KEY}", "Content-Type": "application/json"}
 
-HTML_FILE = "ai_analyse_results.html"
+
+def get_next_html_filename():
+    """Mevcut HTML dosyalarını kontrol edip bir sonraki numarayı döndürür."""
+    import glob
+    import os
+
+    # Mevcut HTML dosyalarını bul
+    pattern = "ai_analyse_results*.html"
+    existing_files = glob.glob(pattern)
+
+    existing_numbers = []
+    for filename in existing_files:
+        # "ai_analyse_results" sonrasındaki sayıyı çıkar
+        if filename == "ai_analyse_results.html":
+            # Eğer numarasız dosya varsa, onu 1 olarak say
+            existing_numbers.append(1)
+        else:
+            # "ai_analyse_results" + sayı + ".html" formatından sayıyı çıkar
+            try:
+                # "ai_analyse_results" = 20 karakter
+                num_part = filename[20:-5]  # ".html" = 5 karakter
+                if num_part.isdigit():
+                    existing_numbers.append(int(num_part))
+            except (ValueError, IndexError):
+                continue
+
+    if existing_numbers:
+        next_num = max(existing_numbers) + 1
+    else:
+        next_num = 1
+
+    return f"ai_analyse_results{next_num}.html"
+
+
+def get_next_json_filename():
+    """Mevcut JSON dosyalarını kontrol edip bir sonraki numarayı döndürür."""
+    import glob
+
+    # Mevcut JSON dosyalarını bul
+    pattern = "ai_analyse_results*.json"
+    existing_files = glob.glob(pattern)
+
+    existing_numbers = []
+    for filename in existing_files:
+        # "ai_analyse_results" sonrasındaki sayıyı çıkar
+        if filename == "ai_analyse_results.json":
+            # Eğer numarasız dosya varsa, onu 1 olarak say
+            existing_numbers.append(1)
+        else:
+            # "ai_analyse_results" + sayı + ".json" formatından sayıyı çıkar
+            try:
+                # "ai_analyse_results" = 20 karakter
+                num_part = filename[20:-5]  # ".json" = 5 karakter
+                if num_part.isdigit():
+                    existing_numbers.append(int(num_part))
+            except (ValueError, IndexError):
+                continue
+
+    if existing_numbers:
+        next_num = max(existing_numbers) + 1
+    else:
+        next_num = 1
+
+    return f"ai_analyse_results{next_num}.json"
+
+
+# HTML ve JSON dosya adlarını dinamik olarak belirle
+HTML_FILE = get_next_html_filename()
+JSON_FILE = get_next_json_filename()
 
 
 def get_next_workspace_name():
@@ -275,11 +343,11 @@ def main():
     close_html()
 
     # JSON dosyasına kaydet
-    with open("ai_analyse_results.json", "w", encoding="utf-8") as f:
+    with open(JSON_FILE, "w", encoding="utf-8") as f:
         json.dump(results, f, ensure_ascii=False, indent=2)
 
     print("Tüm programlar işlendi!")
-    print(f"Sonuçlar '{HTML_FILE}' ve 'ai_analyse_results.json' dosyalarına kaydedildi.")
+    print(f"Sonuçlar '{HTML_FILE}' ve '{JSON_FILE}' dosyalarına kaydedildi.")
 
 
 if __name__ == "__main__":
