@@ -80,6 +80,19 @@ async def get_scheduler_times():
     return {"times": SCHEDULER_TIMES, "count": len(SCHEDULER_TIMES)}
 
 
+@app.get("/api/scheduler-debug")
+async def get_scheduler_debug():
+    """Zamanlayıcı debug bilgilerini döndürür."""
+    import schedule
+
+    return {
+        "current_times": SCHEDULER_TIMES,
+        "is_scheduler_running": system_state.is_scheduler_running,
+        "scheduled_jobs": len(schedule.jobs),
+        "jobs": [str(job) for job in schedule.jobs],
+    }
+
+
 @app.post("/api/scheduler-times/add")
 async def add_scheduler_time(time_str: str):
     """Yeni zamanlayıcı saati ekler."""
@@ -179,13 +192,23 @@ async def toggle_scheduler():
         def run_scheduler():
             import schedule
 
-            # Dinamik saatlerle zamanlayıcı oluştur
-            for time_str in SCHEDULER_TIMES:
-                schedule.every().day.at(time_str).do(analyze_active_calls)
-
             while system_state.is_scheduler_running:
-                schedule.run_pending()
-                time.sleep(60)
+                # Her döngüde zamanlayıcıları temizle ve yeniden oluştur
+                schedule.clear()
+
+                # Mevcut saatlerle zamanlayıcıları oluştur
+                current_times = SCHEDULER_TIMES.copy()
+                # print(f"Zamanlayıcı saatleri: {current_times}")
+
+                for time_str in current_times:
+                    schedule.every().day.at(time_str).do(analyze_active_calls)
+
+                # 60 saniye boyunca zamanlayıcıları kontrol et
+                for i in range(60):
+                    if not system_state.is_scheduler_running:
+                        break
+                    schedule.run_pending()
+                    time.sleep(1)
 
         system_state.scheduler_thread = threading.Thread(target=run_scheduler, daemon=True)
         system_state.scheduler_thread.start()
