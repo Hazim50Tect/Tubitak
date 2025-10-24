@@ -255,8 +255,21 @@
                     </div>
                     <div class="status-item">
                         <h4>Zamanlanmış Saatler</h4>
-                        <p>08:00, 12:00, 17:00, 00:00</p>
+                        <p id="schedulerTimes">Yükleniyor...</p>
                     </div>
+                </div>
+            </div>
+            
+            <div class="control-panel">
+                <h2>⏰ Zamanlayıcı Saatleri Yönetimi</h2>
+                <div style="display: flex; gap: 10px; margin-bottom: 20px; align-items: center;">
+                    <input type="time" id="newTimeInput" placeholder="HH:MM" style="padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+                    <button class="btn btn-success" onclick="addSchedulerTime()" style="padding: 10px 20px;">
+                        ➕ Saat Ekle
+                    </button>
+                </div>
+                <div id="schedulerTimesList" style="display: flex; flex-wrap: wrap; gap: 10px;">
+                    <!-- Dinamik olarak doldurulacak -->
                 </div>
             </div>
             
@@ -280,6 +293,7 @@
         // Sayfa yüklendiğinde durumu kontrol et
         window.onload = function() {
             updateStatus();
+            updateSchedulerTimes();
             setInterval(updateStatus, 10000); // Her 10 saniyede durumu güncelle
         };
         
@@ -318,6 +332,101 @@
                 
             } catch (error) {
                 console.error('Durum güncellenirken hata:', error);
+            }
+        }
+        
+        async function updateSchedulerTimes() {
+            try {
+                const response = await fetch('/api/scheduler-times');
+                const data = await response.json();
+                
+                const timesText = data.times.join(', ');
+                document.getElementById('schedulerTimes').textContent = timesText;
+                
+                // Saatleri liste olarak göster
+                updateSchedulerTimesList(data.times);
+                
+            } catch (error) {
+                console.error('Zamanlayıcı saatleri güncellenirken hata:', error);
+                document.getElementById('schedulerTimes').textContent = 'Hata: Yüklenemedi';
+            }
+        }
+        
+        function updateSchedulerTimesList(times) {
+            const container = document.getElementById('schedulerTimesList');
+            container.innerHTML = '';
+            
+            times.forEach(time => {
+                const timeBadge = document.createElement('div');
+                timeBadge.style.cssText = `
+                    background: #3498db;
+                    color: white;
+                    padding: 8px 15px;
+                    border-radius: 20px;
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    font-size: 14px;
+                `;
+                timeBadge.innerHTML = `
+                    <span>🕐 ${time}</span>
+                    <button onclick="removeSchedulerTime('${time}')" style="
+                        background: #e74c3c;
+                        color: white;
+                        border: none;
+                        border-radius: 50%;
+                        width: 20px;
+                        height: 20px;
+                        cursor: pointer;
+                        font-size: 12px;
+                    ">×</button>
+                `;
+                container.appendChild(timeBadge);
+            });
+        }
+        
+        async function addSchedulerTime() {
+            const timeInput = document.getElementById('newTimeInput');
+            const timeValue = timeInput.value;
+            
+            if (!timeValue) {
+                showAlert('Lütfen bir saat seçin!', 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/scheduler-times/add?time_str=${timeValue}`, { method: 'POST' });
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showAlert(data.message, 'success');
+                    timeInput.value = '';
+                    updateSchedulerTimes();
+                } else {
+                    showAlert('Hata: ' + data.detail, 'error');
+                }
+            } catch (error) {
+                showAlert('Hata: ' + error.message, 'error');
+            }
+        }
+        
+        async function removeSchedulerTime(timeStr) {
+            if (!confirm(`Saat ${timeStr} kaldırılsın mı?`)) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/scheduler-times/remove?time_str=${timeStr}`, { method: 'DELETE' });
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showAlert(data.message, 'success');
+                    updateSchedulerTimes();
+                } else {
+                    showAlert('Hata: ' + data.detail, 'error');
+                }
+            } catch (error) {
+                showAlert('Hata: ' + error.message, 'error');
             }
         }
         

@@ -46,6 +46,9 @@ class SystemState:
 # Global sistem durumu
 system_state = SystemState()
 
+# Zamanlayıcı saatleri - dinamik liste
+SCHEDULER_TIMES = ["08:00", "12:00", "17:00", "00:00"]
+
 
 @app.get("/", response_class=HTMLResponse)
 async def get_home():
@@ -69,6 +72,45 @@ async def get_status():
         "last_analysis_time": system_state.last_analysis_time,
         "last_active_analysis_time": system_state.last_active_analysis_time,
     }
+
+
+@app.get("/api/scheduler-times")
+async def get_scheduler_times():
+    """Zamanlayıcı saatlerini döndürür."""
+    return {"times": SCHEDULER_TIMES, "count": len(SCHEDULER_TIMES)}
+
+
+@app.post("/api/scheduler-times/add")
+async def add_scheduler_time(time_str: str):
+    """Yeni zamanlayıcı saati ekler."""
+    global SCHEDULER_TIMES
+
+    # Saat formatını kontrol et (HH:MM)
+    import re
+
+    if not re.match(r"^([01]?[0-9]|2[0-3]):[0-5][0-9]$", time_str):
+        raise HTTPException(status_code=400, detail="Geçersiz saat formatı! HH:MM formatında olmalı.")
+
+    if time_str in SCHEDULER_TIMES:
+        raise HTTPException(status_code=400, detail="Bu saat zaten mevcut!")
+
+    SCHEDULER_TIMES.append(time_str)
+    SCHEDULER_TIMES.sort()  # Saatleri sırala
+
+    return {"message": f"Saat {time_str} eklendi", "times": SCHEDULER_TIMES}
+
+
+@app.delete("/api/scheduler-times/remove")
+async def remove_scheduler_time(time_str: str):
+    """Zamanlayıcı saatini kaldırır."""
+    global SCHEDULER_TIMES
+
+    if time_str not in SCHEDULER_TIMES:
+        raise HTTPException(status_code=404, detail="Bu saat bulunamadı!")
+
+    SCHEDULER_TIMES.remove(time_str)
+
+    return {"message": f"Saat {time_str} kaldırıldı", "times": SCHEDULER_TIMES}
 
 
 @app.post("/api/start-full-analysis")
@@ -137,10 +179,9 @@ async def toggle_scheduler():
         def run_scheduler():
             import schedule
 
-            schedule.every().day.at("08:00").do(analyze_active_calls)
-            schedule.every().day.at("12:00").do(analyze_active_calls)
-            schedule.every().day.at("17:00").do(analyze_active_calls)
-            schedule.every().day.at("00:00").do(analyze_active_calls)
+            # Dinamik saatlerle zamanlayıcı oluştur
+            for time_str in SCHEDULER_TIMES:
+                schedule.every().day.at(time_str).do(analyze_active_calls)
 
             while system_state.is_scheduler_running:
                 schedule.run_pending()
