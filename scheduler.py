@@ -212,14 +212,6 @@ def run_scheduled_analysis():
 def start_scheduler():
     """Zamanlayıcıyı başlatır."""
     print("🚀 TÜBİTAK Aktif Çağrı Analiz Zamanlayıcısı Başlatılıyor...")
-    print("=" * 80)
-    print("📅 Zamanlanmış Görevler:")
-    print("   🌅 Sabah 08:00 - Aktif çağrılar analizi")
-    print("   ☀️ Öğle 12:00 - Aktif çağrılar analizi")
-    print("   🌆 Akşam 17:00 - Aktif çağrılar analizi")
-    print("   🌙 Gece 00:00 - Aktif çağrılar analizi")
-    print("=" * 80)
-    print("⏰ Zamanlayıcı çalışıyor... (Ctrl+C ile durdurun)")
 
     # Zamanlanmış görevleri tanımla
     schedule.every().day.at("08:00").do(run_scheduled_analysis)

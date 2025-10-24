@@ -50,6 +50,43 @@ system_state = SystemState()
 SCHEDULER_TIMES = ["08:00", "12:00", "17:00", "00:00"]
 
 
+# Zamanlayıcı başlatma fonksiyonu
+def start_scheduler():
+    """Zamanlayıcıyı başlatır."""
+    system_state.is_scheduler_running = True
+    system_state.scheduler_status = "Çalışıyor"
+
+    def run_scheduler():
+        import schedule
+
+        while system_state.is_scheduler_running:
+            # Her döngüde zamanlayıcıları temizle ve yeniden oluştur
+            schedule.clear()
+
+            # Mevcut saatlerle zamanlayıcıları oluştur
+            current_times = SCHEDULER_TIMES.copy()
+            # print(f"Zamanlayıcı saatleri: {current_times}")
+
+            for time_str in current_times:
+                schedule.every().day.at(time_str).do(analyze_active_calls)
+                # print(f"Zamanlayıcı eklendi: {time_str}")
+
+            # 60 saniye boyunca zamanlayıcıları kontrol et
+            for i in range(60):
+                if not system_state.is_scheduler_running:
+                    break
+                schedule.run_pending()
+                time.sleep(1)
+
+    system_state.scheduler_thread = threading.Thread(target=run_scheduler, daemon=True)
+    system_state.scheduler_thread.start()
+    print("🚀 Zamanlayıcı başlatıldı")
+
+
+# Uygulama başladığında zamanlayıcıyı otomatik başlat
+start_scheduler()
+
+
 @app.get("/", response_class=HTMLResponse)
 async def get_home():
     """Ana sayfa HTML'ini döndürür."""
@@ -186,33 +223,7 @@ async def toggle_scheduler():
         return {"message": "Zamanlayıcı durduruldu"}
     else:
         # Zamanlayıcıyı başlat
-        system_state.is_scheduler_running = True
-        system_state.scheduler_status = "Çalışıyor"
-
-        def run_scheduler():
-            import schedule
-
-            while system_state.is_scheduler_running:
-                # Her döngüde zamanlayıcıları temizle ve yeniden oluştur
-                schedule.clear()
-
-                # Mevcut saatlerle zamanlayıcıları oluştur
-                current_times = SCHEDULER_TIMES.copy()
-                # print(f"Zamanlayıcı saatleri: {current_times}")
-
-                for time_str in current_times:
-                    schedule.every().day.at(time_str).do(analyze_active_calls)
-
-                # 60 saniye boyunca zamanlayıcıları kontrol et
-                for i in range(60):
-                    if not system_state.is_scheduler_running:
-                        break
-                    schedule.run_pending()
-                    time.sleep(1)
-
-        system_state.scheduler_thread = threading.Thread(target=run_scheduler, daemon=True)
-        system_state.scheduler_thread.start()
-
+        start_scheduler()
         return {"message": "Zamanlayıcı başlatıldı"}
 
 
