@@ -125,16 +125,21 @@ def scrape_tubitak_data():
         rag_data["programs"].append(program_data)
         time.sleep(2)
 
-    from change_tracker import backup_before_rag_update, get_current_changes
+    from core.change_tracker import backup_before_rag_update, get_current_changes
+    from pathlib import Path
+
+    base_dir = Path(__file__).resolve().parent.parent
+    data_dir = base_dir / "data"
+    rag_file = str(data_dir / "tubitak_rag_data.json")
 
     # Mevcut veriyi bir önceki çalıştırma olarak yedekle
     backup_before_rag_update()
 
     # JSON dosyasına kaydet
-    with open("tubitak_rag_data.json", "w", encoding="utf-8") as f:
+    with open(rag_file, "w", encoding="utf-8") as f:
         json.dump(rag_data, f, ensure_ascii=False, indent=2)
 
-    print(f"\n✅ JSON dosyası 'tubitak_rag_data.json' olarak kaydedildi.")
+    print(f"\n✅ JSON dosyası '{rag_file}' olarak kaydedildi.")
     print("✅ Tüm çağrılar işlendi.")
 
     # Değişiklik raporunu güncelle
@@ -148,4 +153,6 @@ def scrape_tubitak_data():
 
 def check_data_file():
     """tubitak_rag_data.json dosyasının varlığını kontrol eder."""
-    return os.path.exists("tubitak_rag_data.json")
+    from pathlib import Path
+    rag_file = Path(__file__).resolve().parent.parent / "data" / "tubitak_rag_data.json"
+    return rag_file.exists()

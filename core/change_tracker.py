@@ -16,11 +16,16 @@ import requests
 from bs4 import BeautifulSoup
 
 
-CHANGES_FILE = "changes_history.json"
-RAG_FILE = "tubitak_rag_data.json"
-PREV_RAG_FILE = "tubitak_rag_data_previous.json"
-ACTIVE_FILE = "active_calls_data.json"
-PREV_ACTIVE_FILE = "active_calls_previous.json"
+from pathlib import Path
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+DATA_DIR = BASE_DIR / "data"
+
+CHANGES_FILE = str(DATA_DIR / "changes_history.json")
+RAG_FILE = str(DATA_DIR / "tubitak_rag_data.json")
+PREV_RAG_FILE = str(DATA_DIR / "tubitak_rag_data_previous.json")
+ACTIVE_FILE = str(DATA_DIR / "active_calls_data.json")
+PREV_ACTIVE_FILE = str(DATA_DIR / "active_calls_previous.json")
 
 HEADERS = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
 BASE_URL = "https://tubitak.gov.tr"

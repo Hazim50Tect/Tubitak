@@ -1,10 +1,15 @@
 import json
 import time
-from workspace_manager import create_new_workspace
-from file_manager import get_next_html_filename, get_next_json_filename
-from ai_analyzer import send_program_to_anythingllm, extract_score_from_response, update_final_mean_file
-from output_manager import init_html, close_html, append_to_html, init_json, append_to_json, close_json
-from scraper_manager import check_data_file, scrape_tubitak_data
+from pathlib import Path
+from core.anythingllm_client import create_new_workspace
+from utils.file_manager import get_next_html_filename, get_next_json_filename
+from core.ai_analyzer import send_program_to_anythingllm, extract_score_from_response, update_final_mean_file
+from utils.output_manager import init_html, close_html, append_to_html, init_json, append_to_json, close_json
+from scrapers.tubitak_programs_scraper import check_data_file, scrape_tubitak_data
+
+BASE_DIR = Path(__file__).resolve().parent
+DATA_DIR = BASE_DIR / "data"
+RAG_FILE = str(DATA_DIR / "tubitak_rag_data.json")
 
 
 def main():
@@ -15,13 +20,13 @@ def main():
         print("=" * 80)
     except Exception as e:
         print(f"⚠️ TÜBİTAK verileri çekilirken hata oluştu: {str(e)}")
-        print("📁 Mevcut 'tubitak_rag_data.json' dosyasından devam edilmeye çalışılıyor...")
+        print(f"📁 Mevcut '{RAG_FILE}' dosyasından devam edilmeye çalışılıyor...")
         data = None
 
     # Eğer canlı çekimden data dönmediyse dosyadan oku
     if not data:
         try:
-            with open("tubitak_rag_data.json", "r", encoding="utf-8") as f:
+            with open(RAG_FILE, "r", encoding="utf-8") as f:
                 data = json.load(f)
         except FileNotFoundError:
             print("❌ tubitak_rag_data.json dosyası bulunamadı!")

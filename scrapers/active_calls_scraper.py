@@ -133,16 +133,21 @@ def scrape_active_calls():
 
         rag_data["programs"].append(program_data)
 
-    from change_tracker import backup_before_active_update, get_current_changes
+    from core.change_tracker import backup_before_active_update, get_current_changes
+    from pathlib import Path
+
+    base_dir = Path(__file__).resolve().parent.parent
+    data_dir = base_dir / "data"
+    active_file = str(data_dir / "active_calls_data.json")
 
     # Mevcut veriyi bir önceki çalıştırma olarak yedekle
     backup_before_active_update()
 
     # JSON dosyasına kaydet
-    with open("active_calls_data.json", "w", encoding="utf-8") as f:
+    with open(active_file, "w", encoding="utf-8") as f:
         json.dump(rag_data, f, ensure_ascii=False, indent=2)
 
-    print(f"\n✅ Aktif çağrılar 'active_calls_data.json' dosyasına kaydedildi.")
+    print(f"\n✅ Aktif çağrılar '{active_file}' dosyasına kaydedildi.")
     print(f"✅ Toplam {len(rag_data['programs'])} çağrı işlendi.")
 
     # Değişiklik raporunu güncelle
@@ -156,13 +161,17 @@ def scrape_active_calls():
 
 def check_active_calls_file():
     """active_calls_data.json dosyasının varlığını kontrol eder."""
-    return os.path.exists("active_calls_data.json")
+    from pathlib import Path
+    active_file = Path(__file__).resolve().parent.parent / "data" / "active_calls_data.json"
+    return active_file.exists()
 
 
 def get_active_calls_data():
     """active_calls_data.json dosyasını okur."""
+    from pathlib import Path
+    active_file = Path(__file__).resolve().parent.parent / "data" / "active_calls_data.json"
     try:
-        with open("active_calls_data.json", "r", encoding="utf-8") as f:
+        with open(active_file, "r", encoding="utf-8") as f:
             return json.load(f)
     except (FileNotFoundError, json.JSONDecodeError):
         return None

@@ -21,7 +21,7 @@ import json
 from datetime import datetime
 from typing import Dict, List, Optional
 import asyncio
-from scheduler import analyze_active_calls
+from core.active_call_scheduler import analyze_active_calls
 from main import main as run_full_analysis
 
 # FastAPI uygulaması
@@ -285,7 +285,7 @@ async def get_results():
 @app.get("/api/changes")
 async def get_changes():
     """TÜBİTAK program ve aktif çağrı değişiklik raporunu döndürür."""
-    from change_tracker import get_current_changes
+    from core.change_tracker import get_current_changes
     try:
         report = get_current_changes()
         return report
@@ -296,7 +296,7 @@ async def get_changes():
 @app.post("/api/check-changes")
 async def check_changes():
     """TÜBİTAK sayfasını anlık tarayarak değişiklikleri kontrol eder ve raporu günceller."""
-    from change_tracker import run_quick_diff_check
+    from core.change_tracker import run_quick_diff_check
     try:
         report = run_quick_diff_check()
         return {"message": "Değişiklik kontrolü tamamlandı", "report": report}

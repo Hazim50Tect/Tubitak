@@ -4,17 +4,24 @@ import json
 import os
 import re
 from datetime import datetime
-from active_calls_manager import scrape_active_calls
-from ai_analyzer import send_program_to_anythingllm, extract_score_from_response, update_final_mean_file
-from workspace_manager import create_new_workspace
-from file_manager import get_next_html_filename, get_next_json_filename
-from output_manager import init_html, close_html, append_to_html
+from pathlib import Path
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+DATA_DIR = BASE_DIR / "data"
+RAG_FILE = str(DATA_DIR / "tubitak_rag_data.json")
+FINAL_MEAN_FILE = str(DATA_DIR / "FINAL_ai_results_mean.json")
+
+from scrapers.active_calls_scraper import scrape_active_calls, get_active_calls
+from core.ai_analyzer import send_program_to_anythingllm, extract_score_from_response, update_final_mean_file
+from core.anythingllm_client import create_new_workspace
+from utils.file_manager import get_next_html_filename, get_next_json_filename
+from utils.output_manager import init_html, close_html, append_to_html
 
 
 def load_final_ai_results():
     """FINAL_ai_results_mean.json dosyasını yükler."""
     try:
-        with open("FINAL_ai_results_mean.json", "r", encoding="utf-8") as f:
+        with open(FINAL_MEAN_FILE, "r", encoding="utf-8") as f:
             return json.load(f)
     except (FileNotFoundError, json.JSONDecodeError):
         return {}
@@ -128,8 +135,6 @@ def analyze_active_calls():
 
     # 1. Aktif çağrıları çek (JSON dosyası oluşturmadan)
     print("📥 Aktif çağrılar çekiliyor...")
-    from active_calls_manager import get_active_calls
-
     active_calls = get_active_calls()
 
     if not active_calls:
@@ -139,7 +144,7 @@ def analyze_active_calls():
     # 2. tubitak_rag_data.json dosyasını yükle
     print("📊 TÜBİTAK veri dosyası yükleniyor...")
     try:
-        with open("tubitak_rag_data.json", "r", encoding="utf-8") as f:
+        with open(RAG_FILE, "r", encoding="utf-8") as f:
             rag_data = json.load(f)
     except (FileNotFoundError, json.JSONDecodeError):
         print("❌ tubitak_rag_data.json dosyası bulunamadı!")

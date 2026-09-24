@@ -9,7 +9,11 @@ BASE_URL = "http://localhost:3001/api/v1"
 
 headers = {"Authorization": f"Bearer {API_KEY}", "Content-Type": "application/json"}
 
-FINAL_MEAN_FILE = "FINAL_ai_results_mean.json"
+from pathlib import Path
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+DATA_DIR = BASE_DIR / "data"
+FINAL_MEAN_FILE = str(DATA_DIR / "FINAL_ai_results_mean.json")
 
 
 def extract_text(text: str) -> str:
