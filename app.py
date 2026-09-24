@@ -3,6 +3,14 @@
 TÜBİTAK Analiz FastAPI Uygulaması
 """
 
+import sys
+import os
+
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+if hasattr(sys.stderr, "reconfigure"):
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+
 from fastapi import FastAPI, BackgroundTasks, HTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse, JSONResponse
@@ -10,7 +18,6 @@ from fastapi.middleware.cors import CORSMiddleware
 import threading
 import time
 import json
-import os
 from datetime import datetime
 from typing import Dict, List, Optional
 import asyncio

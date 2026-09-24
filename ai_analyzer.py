@@ -4,7 +4,7 @@ import re
 import os
 
 # AnythingLLM API ayarları
-API_KEY = os.getenv("ANYTHINGLLM_API_KEY", "R212Y2R-Z494M7R-J8Q01DP-JY4DV4N")
+API_KEY = os.getenv("ANYTHINGLLM_API_KEY", "H4C8XWE-CKZ4RNV-HRPK432-W93J1C6")
 BASE_URL = "http://localhost:3001/api/v1"
 
 headers = {"Authorization": f"Bearer {API_KEY}", "Content-Type": "application/json"}
