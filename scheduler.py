@@ -2,6 +2,7 @@ import schedule
 import time
 import json
 import os
+import re
 from datetime import datetime
 from active_calls_manager import scrape_active_calls
 from ai_analyzer import send_program_to_anythingllm, extract_score_from_response, update_final_mean_file
@@ -19,36 +20,96 @@ def load_final_ai_results():
         return {}
 
 
+def normalize_text(text: str) -> str:
+    """Türkçe karakterleri ve noktalama işaretlerini normalize ederek küçük harfe çevirir."""
+    if not text:
+        return ""
+    translation = str.maketrans("İIĞÜŞÖÇıiğüşöç", "iigusoçiigusoç")
+    cleaned = text.translate(translation).lower()
+    cleaned = re.sub(r"[^a-z0-9\s]", " ", cleaned)
+    cleaned = re.sub(r"\s+", " ", cleaned).strip()
+    return cleaned
+
+
 def extract_call_number(program_name):
     """Program adından çağrı numarasını çıkarır."""
     import re
 
-    # "1707 - Sipariş Ar-Ge..." veya "1831 Yeşil İnovasyon..." formatından sayı çıkar
-    # Önce "-" ile başlayan formatı dene
-    match = re.match(r"^(\d+)\s*-", program_name)
-    if match:
+    # 1. Başta "-" veya boşluk ile ayrılmış sayı ("1707 - ...", "1501-...", "1831 Yeşil...")
+    match = re.match(r"^(\d+)\s*-?", program_name)
+    if match and int(match.group(1)) < 2000:  # 2026 gibi yılları elemek için
         return match.group(1)
 
-    # Sonra sadece sayı ile başlayan formatı dene
-    match = re.match(r"^(\d+)\s+", program_name)
-    if match:
-        return match.group(1)
+    # 2. Metin içinde TÜBİTAK destek kodu formatında 4 haneli sayı (1000-1999 arası)
+    match_code = re.search(r"\b(1[5-8]\d{2})\b", program_name)
+    if match_code:
+        return match_code.group(1)
 
     return None
 
 
-def find_matching_program_in_rag_data(active_call_name, rag_data):
-    """Aktif çağrı adını tubitak_rag_data.json'daki programlarla eşleştirir."""
-    call_number = extract_call_number(active_call_name)
+# Bilinen özel alias / eşleşme kuralları (küçük harf normalize edilmiş)
+SPECIAL_KEYWORD_MAPPINGS = [
+    # (Anahtar kelimeler, Hedef program kod veya adı parçası)
+    (["bigg", "yatirim"], "1812"),
+    (["bigg", "uygulayici"], "1612"),
+    (["bigg"], "1512"),
+    (["sayem"], "1833"),
+    (["yesil", "mentorluk"], "1831"),
+    (["sanayide", "yesil", "donusum"], "1832"),
+    (["siparis", "ar", "ge"], "1707"),
+    (["yapay", "zeka", "ekosistem"], "1711"),
+    (["patent", "tabanli"], "1702"),
+    (["patent"], "1602"),
+    (["oncul", "ar", "ge"], "1515"),
+]
 
-    if not call_number:
+
+def find_matching_program_in_rag_data(active_call_name, rag_data):
+    """Aktif çağrı adını tubitak_rag_data.json'daki programlarla akıllıca eşleştirir."""
+    if not active_call_name or not rag_data:
         return None
 
-    # tubitak_rag_data.json'daki programları ara
-    for program in rag_data.get("programs", []):
-        program_name = program.get("program_name", "")
-        if call_number in program_name:
-            return program_name
+    # 1. Aşama: Kod / Numaraya göre arama (ör. 1501, 1707 vb.)
+    call_number = extract_call_number(active_call_name)
+    if call_number:
+        for program in rag_data.get("programs", []):
+            prog_name = program.get("program_name", "")
+            if re.search(rf"\b{call_number}\b", prog_name):
+                return prog_name
+
+    norm_active = normalize_text(active_call_name)
+
+    # 2. Aşama: Özel anahtar kelime eşleştirmeleri (BiGG Yatırım -> 1812 gibi)
+    for keywords, target_code in SPECIAL_KEYWORD_MAPPINGS:
+        if all(kw in norm_active for kw in keywords):
+            for program in rag_data.get("programs", []):
+                prog_name = program.get("program_name", "")
+                if re.search(rf"\b{target_code}\b", prog_name):
+                    return prog_name
+
+    # 3. Aşama: Kelime benzerliği (Token Overlap) ile en iyi eşleşmeyi bulma
+    stop_words = {"ve", "veya", "ile", "icin", "yili", "yılı", "cagrisi", "cagrısı", "acildi", "açıldı", "destek", "programi", "programı", "donemi", "dönemi", "2024", "2025", "2026", "2027", "1", "2", "3"}
+    active_tokens = {w for w in norm_active.split() if w not in stop_words and len(w) > 2}
+
+    best_match = None
+    best_score = 0
+
+    if active_tokens:
+        for program in rag_data.get("programs", []):
+            prog_name = program.get("program_name", "")
+            norm_prog = normalize_text(prog_name)
+            prog_tokens = {w for w in norm_prog.split() if w not in stop_words and len(w) > 2}
+
+            # Kesişim skorunu hesapla
+            overlap = len(active_tokens.intersection(prog_tokens))
+            if overlap > best_score:
+                best_score = overlap
+                best_match = prog_name
+
+    # En az 2 anlamlı kelime örtüşüyorsa kabul et
+    if best_score >= 2:
+        return best_match
 
     return None
 

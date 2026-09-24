@@ -1,56 +1,56 @@
 {
   "source": "TÜBİTAK Aktif Çağrılar",
   "url": "https://tubitak.gov.tr/tr/destekler/sanayi/ulusal-destek-programlari",
-  "extraction_date": "2026-09-24 11:31:47",
+  "extraction_date": "2026-09-24 12:40:11",
   "programs": [
     {
       "program_name": "1501-Sanayi Ar-Ge Destek Programı 2026 yılı 2. Çağrısı Açıldı",
       "program_url": "https://tubitak.gov.tr/tr/destekler/destek/sanayi/ulusal-destek-programlari/cagri-1501-sanayi-ar-ge-destek-programi-2026-yili-2-cagrisi-acildi",
       "applicant_requirements": "Aktif çağrı - detay çekilmedi",
       "status": "active_call",
-      "found_date": "2026-09-24 11:31:47"
+      "found_date": "2026-09-24 12:40:11"
     },
     {
       "program_name": "1507-KOBİ Ar-Ge Başlangıç Destek Programı 2026 yılı 2. Çağrısı Açıldı",
       "program_url": "https://tubitak.gov.tr/tr/destekler/destek/sanayi/ulusal-destek-programlari/cagri-1507-kobi-ar-ge-baslangic-destek-programi-2026-yili-2-cagrisi-acildi",
       "applicant_requirements": "Aktif çağrı - detay çekilmedi",
       "status": "active_call",
-      "found_date": "2026-09-24 11:31:47"
+      "found_date": "2026-09-24 12:40:11"
     },
     {
       "program_name": "1707 Sipariş Ar-Ge 2026 Yılı 3. Çağrısı Açıldı",
       "program_url": "https://tubitak.gov.tr/tr/destekler/destek/sanayi/ulusal-destek-programlari/cagri-1707-siparis-ar-ge-2026-yili-3-cagrisi-acildi",
       "applicant_requirements": "Aktif çağrı - detay çekilmedi",
       "status": "active_call",
-      "found_date": "2026-09-24 11:31:47"
+      "found_date": "2026-09-24 12:40:11"
     },
     {
       "program_name": "1711 - Yapay Zekâ Ekosistem 2026 Yılı Çağrısı Açıldı",
       "program_url": "https://tubitak.gov.tr/tr/destekler/destek/sanayi/ulusal-destek-programlari/cagri-1711-yapay-zeka-ekosistem-2026-yili-cagrisi-acildi",
       "applicant_requirements": "Aktif çağrı - detay çekilmedi",
       "status": "active_call",
-      "found_date": "2026-09-24 11:31:47"
+      "found_date": "2026-09-24 12:40:11"
     },
     {
       "program_name": "1831 Yeşil İnovasyon Teknoloji Mentörlük Çağrısı",
       "program_url": "https://tubitak.gov.tr/tr/destekler/destek/sanayi/ulusal-destek-programlari/cagri-1831-yesil-inovasyon-teknoloji-mentorluk-cagrisi",
       "applicant_requirements": "Aktif çağrı - detay çekilmedi",
       "status": "active_call",
-      "found_date": "2026-09-24 11:31:47"
+      "found_date": "2026-09-24 12:40:11"
     },
     {
       "program_name": "1832 Sanayide Yeşil Dönüşüm 2026-2 Çağrısı Açıldı",
       "program_url": "https://tubitak.gov.tr/tr/destekler/destek/sanayi/ulusal-destek-programlari/cagri-1832-sanayide-yesil-donusum-2026-2-cagrisi-acildi",
       "applicant_requirements": "Aktif çağrı - detay çekilmedi",
       "status": "active_call",
-      "found_date": "2026-09-24 11:31:47"
+      "found_date": "2026-09-24 12:40:11"
     },
     {
       "program_name": "BiGG Yatırım Programı 2026-2 Çağrısı Açıldı",
       "program_url": "https://tubitak.gov.tr/tr/destekler/destek/sanayi/ulusal-destek-programlari/cagri-bigg-yatirim-programi-2026-2-cagrisi-acildi",
       "applicant_requirements": "Aktif çağrı - detay çekilmedi",
       "status": "active_call",
-      "found_date": "2026-09-24 11:31:47"
+      "found_date": "2026-09-24 12:40:11"
     }
   ]
 }
