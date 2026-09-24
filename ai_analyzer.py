@@ -99,7 +99,7 @@ def update_final_mean_file(program_name: str, score: float):
     try:
         with open(FINAL_MEAN_FILE, "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False, indent=2)
-        print(f"Ortalama güncellendi: {program_name} - Yeni skor: {score}, Ortalama: {mean_score}")
+        print(f"Ortalama güncellendi: {program_name} - Yeni skor: {score}, Ortalama: {data[program_name]['mean']}")
     except Exception as e:
         print(f"Ortalama dosyası kaydedilemedi: {str(e)}")
 
@@ -125,7 +125,6 @@ Bu program büyük ölçekli kurumsal bir Ar-Ge Merkezi için uygun mu?
 
             print(f"[{program_index}] Başarılı: {program_name}")
             print(f"Yanıt: {cleaned['response'][:100]}...")  # sadece özet
-            print("-" * 80)
             return cleaned
         else:
             print(f"[{program_index}] Hata: {program_name} - Status Code: {response.status_code}")

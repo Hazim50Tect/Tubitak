@@ -5,26 +5,32 @@ from file_manager import get_next_html_filename, get_next_json_filename
 from ai_analyzer import send_program_to_anythingllm, extract_score_from_response, update_final_mean_file
 from output_manager import init_html, close_html, append_to_html, init_json, append_to_json, close_json
 from scraper_manager import check_data_file, scrape_tubitak_data
-from active_calls_manager import scrape_active_calls, check_active_calls_file
 
 
 def main():
-    # Aktif çağrıları çek
-    print("🔄 Aktif çağrılar kontrol ediliyor...")
-    active_calls_data = scrape_active_calls()
-    print("=" * 80)
-
-    # Veri dosyası kontrolü ve otomatik çekme
-    if not check_data_file():
-        print("📥 tubitak_rag_data.json dosyası bulunamadı!")
-        print("🔄 TÜBİTAK verileri otomatik olarak çekiliyor...")
-        scrape_tubitak_data()
+    # 1. TÜBİTAK sayfasındaki güncel program listesini çek ve JSON'ı güncelle
+    print("🔄 TÜBİTAK web sitesindeki güncel programlar çekiliyor ve 'tubitak_rag_data.json' güncelleniyor...")
+    try:
+        data = scrape_tubitak_data()
         print("=" * 80)
-    else:
-        print("✅ tubitak_rag_data.json dosyası mevcut.")
-        print("=" * 80)
+    except Exception as e:
+        print(f"⚠️ TÜBİTAK verileri çekilirken hata oluştu: {str(e)}")
+        print("📁 Mevcut 'tubitak_rag_data.json' dosyasından devam edilmeye çalışılıyor...")
+        data = None
 
-    # Yeni workspace oluştur
+    # Eğer canlı çekimden data dönmediyse dosyadan oku
+    if not data:
+        try:
+            with open("tubitak_rag_data.json", "r", encoding="utf-8") as f:
+                data = json.load(f)
+        except FileNotFoundError:
+            print("❌ tubitak_rag_data.json dosyası bulunamadı!")
+            return
+        except json.JSONDecodeError:
+            print("❌ JSON dosyası geçersiz format!")
+            return
+
+    # 2. Yeni workspace oluştur
     workspace_slug = create_new_workspace()
     if not workspace_slug:
         print("Workspace oluşturulamadı! İşlem sonlandırılıyor.")
@@ -33,30 +39,12 @@ def main():
     print(f"Kullanılacak workspace: {workspace_slug}")
     print("=" * 80)
 
-    # HTML ve JSON dosya adlarını belirle
+    # 3. HTML ve JSON dosya adlarını belirle
     html_file = get_next_html_filename()
     json_file = get_next_json_filename()
 
-    # JSON dosyasını oku
-    try:
-        with open("tubitak_rag_data.json", "r", encoding="utf-8") as f:
-            data = json.load(f)
-    except FileNotFoundError:
-        print("tubitak_rag_data.json dosyası bulunamadı!")
-        return
-    except json.JSONDecodeError:
-        print("JSON dosyası geçersiz format!")
-        return
-
     programs = data.get("programs", [])
     print(f"Toplam {len(programs)} program bulundu.")
-
-    # Aktif çağrıları da ekle
-    if active_calls_data:
-        active_programs = active_calls_data.get("programs", [])
-        programs.extend(active_programs)
-        print(f"Aktif çağrılardan {len(active_programs)} program eklendi.")
-
     print(f"Toplam {len(programs)} program analiz edilecek.")
     print("=" * 80)
 
@@ -106,6 +94,7 @@ def main():
                 append_to_html(error_item, html_file)
                 append_to_json(error_item, json_file)
 
+            print("-" * 80)
             time.sleep(1)
         else:
             print(f"[{index}] Atlanıyor: {program_name} - Status: {status}")
