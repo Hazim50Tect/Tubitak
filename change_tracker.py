@@ -12,6 +12,8 @@ import json
 import shutil
 from datetime import datetime
 import re
+import requests
+from bs4 import BeautifulSoup
 
 
 CHANGES_FILE = "changes_history.json"
@@ -19,6 +21,10 @@ RAG_FILE = "tubitak_rag_data.json"
 PREV_RAG_FILE = "tubitak_rag_data_previous.json"
 ACTIVE_FILE = "active_calls_data.json"
 PREV_ACTIVE_FILE = "active_calls_previous.json"
+
+HEADERS = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
+BASE_URL = "https://tubitak.gov.tr"
+LIST_URL = f"{BASE_URL}/tr/destekler/sanayi/ulusal-destek-programlari"
 
 
 def normalize_clean_text(text):
@@ -57,31 +63,33 @@ def compare_programs(old_programs, new_programs):
     - Yayından Kalkanlar / Silinenler
     - Başvuru Şartları Değişenler
     """
-    old_dict = {p.get("program_name"): p for p in (old_programs or []) if p.get("program_name")}
-    new_dict = {p.get("program_name"): p for p in (new_programs or []) if p.get("program_name")}
+    old_dict = {normalize_clean_text(p.get("program_name")): p for p in (old_programs or []) if p.get("program_name")}
+    new_dict = {normalize_clean_text(p.get("program_name")): p for p in (new_programs or []) if p.get("program_name")}
 
     new_added = []
     removed = []
     modified = []
 
     # 1. Yeni eklenenler ve şartı değişenler
-    for name, p in new_dict.items():
-        if name not in old_dict:
+    for norm_name, p in new_dict.items():
+        orig_name = p.get("program_name")
+        if norm_name not in old_dict:
             new_added.append({
-                "program_name": name,
+                "program_name": orig_name,
                 "url": p.get("program_url", ""),
                 "applicant_requirements": p.get("applicant_requirements", ""),
                 "status": p.get("status", "success"),
                 "detected_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             })
         else:
-            old_req = normalize_clean_text(old_dict[name].get("applicant_requirements", ""))
+            old_item = old_dict[norm_name]
+            old_req = normalize_clean_text(old_item.get("applicant_requirements", ""))
             new_req = normalize_clean_text(p.get("applicant_requirements", ""))
 
             # Şart metinleri var ve farklıysa
             if old_req and new_req and old_req != new_req and old_req != "Veri bulunamadı" and new_req != "Veri bulunamadı":
                 modified.append({
-                    "program_name": name,
+                    "program_name": orig_name,
                     "url": p.get("program_url", ""),
                     "old_requirements": old_req,
                     "new_requirements": new_req,
@@ -89,10 +97,10 @@ def compare_programs(old_programs, new_programs):
                 })
 
     # 2. Silinen / yayından kalkanlar
-    for name, p in old_dict.items():
-        if name not in new_dict:
+    for norm_name, p in old_dict.items():
+        if norm_name not in new_dict:
             removed.append({
-                "program_name": name,
+                "program_name": p.get("program_name"),
                 "url": p.get("program_url", ""),
                 "last_requirements": p.get("applicant_requirements", ""),
                 "detected_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -107,17 +115,19 @@ def compare_active_calls(old_calls, new_calls):
     - Yeni Açılan Aktif Çağrılar
     - Süresi Dolup Kapanan Aktif Çağrılar
     """
-    def get_name(item):
-        return item.get("name") or item.get("program_name") or ""
+    def get_norm_name(item):
+        name = item.get("name") or item.get("program_name") or ""
+        return normalize_clean_text(name)
 
-    old_dict = {get_name(c): c for c in (old_calls or []) if get_name(c)}
-    new_dict = {get_name(c): c for c in (new_calls or []) if get_name(c)}
+    old_dict = {get_norm_name(c): c for c in (old_calls or []) if get_norm_name(c)}
+    new_dict = {get_norm_name(c): c for c in (new_calls or []) if get_norm_name(c)}
 
     new_opened = []
     closed = []
 
-    for name, c in new_dict.items():
-        if name not in old_dict:
+    for norm_name, c in new_dict.items():
+        if norm_name not in old_dict:
+            name = c.get("name") or c.get("program_name")
             new_opened.append({
                 "name": name,
                 "url": c.get("url") or c.get("program_url", ""),
@@ -125,8 +135,9 @@ def compare_active_calls(old_calls, new_calls):
                 "detected_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             })
 
-    for name, c in old_dict.items():
-        if name not in new_dict:
+    for norm_name, c in old_dict.items():
+        if norm_name not in new_dict:
+            name = c.get("name") or c.get("program_name")
             closed.append({
                 "name": name,
                 "url": c.get("url") or c.get("program_url", ""),
@@ -170,26 +181,46 @@ def save_changes_report(new_programs, removed_programs, modified_programs, new_a
 
 def get_current_changes():
     """
-    Kaydedilmiş veya hesaplanmış en güncel fark raporunu döndürür.
+    Kaydedilmiş en son fark raporunu döndürür.
+    Dosya yoksa veya boşsa yeniden hesaplar.
     """
-    prev_rag = load_json(PREV_RAG_FILE)
-    curr_rag = load_json(RAG_FILE)
+    saved = load_json(CHANGES_FILE)
+    if saved:
+        return saved
 
-    prev_active = load_json(PREV_ACTIVE_FILE)
-    curr_active = load_json(ACTIVE_FILE)
+    return recalculate_changes()
 
-    old_programs = prev_rag.get("programs", []) if prev_rag else []
-    new_programs = curr_rag.get("programs", []) if curr_rag else []
 
+def recalculate_changes():
+    """Mevcut kayıtlı dosyalar arasındaki farkı hesaplar."""
+    # Referans dosyaları yoksa mevcut dosyaları kopyala
+    if not os.path.exists(PREV_ACTIVE_FILE) and os.path.exists(ACTIVE_FILE):
+        try:
+            shutil.copy2(ACTIVE_FILE, PREV_ACTIVE_FILE)
+        except Exception:
+            pass
+
+    if not os.path.exists(PREV_RAG_FILE) and os.path.exists(RAG_FILE):
+        try:
+            shutil.copy2(RAG_FILE, PREV_RAG_FILE)
+        except Exception:
+            pass
+
+    prev_rag = load_json(PREV_RAG_FILE) or load_json(RAG_FILE) or {}
+    curr_rag = load_json(RAG_FILE) or {}
+
+    prev_active = load_json(PREV_ACTIVE_FILE) or load_json(ACTIVE_FILE) or {}
+    curr_active = load_json(ACTIVE_FILE) or {}
+
+    old_programs = prev_rag.get("programs", [])
+    new_programs = curr_rag.get("programs", [])
     new_p, rem_p, mod_p = compare_programs(old_programs, new_programs)
 
-    old_calls = prev_active.get("programs", []) if prev_active else []
-    new_calls = curr_active.get("programs", []) if curr_active else []
-
+    old_calls = prev_active.get("programs", [])
+    new_calls = curr_active.get("programs", [])
     new_c, closed_c = compare_active_calls(old_calls, new_calls)
 
-    report = save_changes_report(new_p, rem_p, mod_p, new_c, closed_c)
-    return report
+    return save_changes_report(new_p, rem_p, mod_p, new_c, closed_c)
 
 
 def backup_before_rag_update():
@@ -213,23 +244,16 @@ def backup_before_active_update():
 def run_quick_diff_check():
     """
     Canlı sayfadan program isimlerini ve aktif çağrıları hızlıca çekip
-    önceki çalıştırma verisi ile kıyaslar ve değişiklik raporunu günceller.
+    mevcut kayıtlı veriler ile kıyaslar ve değişiklik raporunu günceller.
     """
-    import requests
-    from bs4 import BeautifulSoup
-
-    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
-    base_url = "https://tubitak.gov.tr"
-    list_url = f"{base_url}/tr/destekler/sanayi/ulusal-destek-programlari"
-
     try:
-        r = requests.get(list_url, headers=headers, timeout=15)
+        r = requests.get(LIST_URL, headers=HEADERS, timeout=15)
         soup = BeautifulSoup(r.text, "html.parser")
 
         # 1. Sol taraftaki program isimlerini çek
         container = soup.select_one("#paragraph-id--311 > div > div > div > div")
-        live_program_names = set()
-        live_programs_quick = []
+        live_programs = []
+        seen_programs = set()
         if container:
             for div in container.select("div > div > div > div > div"):
                 a = div.find("a")
@@ -237,30 +261,35 @@ def run_quick_diff_check():
                     name = normalize_clean_text(a.get_text())
                     href = a["href"]
                     if not href.startswith("http"):
-                        href = base_url + href
-                    if name and name not in live_program_names:
-                        live_program_names.add(name)
-                        live_programs_quick.append({"program_name": name, "program_url": href})
+                        href = BASE_URL + href
+                    if name and name not in seen_programs:
+                        seen_programs.add(name)
+                        live_programs.append({"program_name": name, "program_url": href})
 
         # 2. Sağ taraftaki aktif çağrıları çek
         active_container = soup.select_one("#block-feza-gursey-views-block-cagrilar-block-2")
         live_active_calls = []
+        seen_calls = set()
         if active_container:
             for link in active_container.select(".views-row a[href]"):
                 call_name = normalize_clean_text(link.get_text())
                 href = link.get("href")
                 if not href.startswith("http"):
-                    href = base_url + href
-                live_active_calls.append({"name": call_name, "url": href, "found_date": datetime.now().strftime("%Y-%m-%d %H:%M:%S")})
+                    href = BASE_URL + href
+                if call_name and call_name not in seen_calls:
+                    seen_calls.add(call_name)
+                    live_active_calls.append({"name": call_name, "url": href, "found_date": datetime.now().strftime("%Y-%m-%d %H:%M:%S")})
 
-        # 3. Önceki durumla karşılaştır
-        prev_rag = load_json(PREV_RAG_FILE) or load_json(RAG_FILE) or {"programs": []}
-        old_programs = prev_rag.get("programs", [])
-        new_programs, removed_programs, modified_programs = compare_programs(old_programs, live_programs_quick)
+        # 3. Önceki durumla karşılaştır:
+        # Programlar için: tubitak_rag_data.json referans alınır
+        current_rag = load_json(RAG_FILE) or {}
+        saved_programs = current_rag.get("programs", [])
+        new_programs, removed_programs, modified_programs = compare_programs(saved_programs, live_programs)
 
-        prev_active = load_json(PREV_ACTIVE_FILE) or load_json(ACTIVE_FILE) or {"programs": []}
-        old_active = prev_active.get("programs", [])
-        new_active, closed_active = compare_active_calls(old_active, live_active_calls)
+        # Aktif çağrılar için: active_calls_data.json referans alınır
+        current_active = load_json(ACTIVE_FILE) or {}
+        saved_calls = current_active.get("programs", [])
+        new_active, closed_active = compare_active_calls(saved_calls, live_active_calls)
 
         report = save_changes_report(new_programs, removed_programs, modified_programs, new_active, closed_active)
         return report
@@ -268,4 +297,3 @@ def run_quick_diff_check():
     except Exception as e:
         print(f"Canlı değişiklik kontrolünde hata: {str(e)}")
         return get_current_changes()
-
