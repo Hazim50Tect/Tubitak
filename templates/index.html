@@ -210,6 +210,211 @@
             color: #721c24;
             border: 1px solid #f5c6cb;
         }
+
+        /* Değişiklik ve Fark Radarı Stilleri */
+        .radar-panel {
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 30px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+
+        .radar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #edf2f7;
+        }
+
+        .radar-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #1a202c;
+            font-size: 1.35rem;
+            font-weight: 700;
+        }
+
+        .radar-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .radar-last-check {
+            font-size: 0.85rem;
+            color: #718096;
+            background: #f7fafc;
+            padding: 6px 12px;
+            border-radius: 20px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .radar-filter-bar {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .filter-chip {
+            background: #f1f5f9;
+            color: #475569;
+            border: 1px solid #cbd5e1;
+            padding: 8px 16px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .filter-chip:hover {
+            background: #e2e8f0;
+            transform: translateY(-1px);
+        }
+
+        .filter-chip.active {
+            background: #2563eb;
+            color: white;
+            border-color: #2563eb;
+            box-shadow: 0 4px 10px rgba(37, 99, 235, 0.25);
+        }
+
+        .filter-chip.chip-new.active { background: #16a34a; border-color: #16a34a; }
+        .filter-chip.chip-removed.active { background: #dc2626; border-color: #dc2626; }
+        .filter-chip.chip-modified.active { background: #d97706; border-color: #d97706; }
+        .filter-chip.chip-active-new.active { background: #0284c7; border-color: #0284c7; }
+        .filter-chip.chip-active-closed.active { background: #64748b; border-color: #64748b; }
+
+        .chip-count {
+            background: rgba(0, 0, 0, 0.1);
+            color: inherit;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 700;
+        }
+
+        .filter-chip.active .chip-count {
+            background: rgba(255, 255, 255, 0.25);
+        }
+
+        .radar-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-height: 450px;
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+
+        .change-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-left: 5px solid #94a3b8;
+            border-radius: 8px;
+            padding: 16px;
+            transition: all 0.2s ease;
+        }
+
+        .change-card:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            border-color: #cbd5e1;
+        }
+
+        .change-card.card-new { border-left-color: #16a34a; background: #f0fdf4; }
+        .change-card.card-removed { border-left-color: #dc2626; background: #fef2f2; }
+        .change-card.card-modified { border-left-color: #d97706; background: #fffbeb; }
+        .change-card.card-active-new { border-left-color: #0284c7; background: #f0f9ff; }
+        .change-card.card-active-closed { border-left-color: #64748b; background: #f8fafc; }
+
+        .change-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .change-badge {
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .badge-new { background: #dcfce7; color: #15803d; }
+        .badge-removed { background: #fee2e2; color: #b91c1c; }
+        .badge-modified { background: #fef3c7; color: #b45309; }
+        .badge-active-new { background: #e0f2fe; color: #0369a1; }
+        .badge-active-closed { background: #e2e8f0; color: #475569; }
+
+        .change-name {
+            font-size: 1.05rem;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 6px;
+        }
+
+        .change-desc {
+            font-size: 0.9rem;
+            color: #475569;
+            line-height: 1.45;
+        }
+
+        .diff-container {
+            margin-top: 10px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .diff-container { grid-template-columns: 1fr; }
+        }
+
+        .diff-box {
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+        }
+
+        .diff-old { background: #fee2e2; border-left: 3px solid #dc2626; color: #7f1d1d; }
+        .diff-new { background: #dcfce7; border-left: 3px solid #16a34a; color: #14532d; }
+
+        .diff-title {
+            font-weight: 700;
+            margin-bottom: 4px;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+        }
+
+        .empty-changes {
+            text-align: center;
+            padding: 35px 20px;
+            background: #f8fafc;
+            border-radius: 8px;
+            border: 1px dashed #cbd5e1;
+            color: #64748b;
+        }
+
+        .empty-changes h4 {
+            color: #1e293b;
+            margin-bottom: 6px;
+        }
     </style>
 </head>
 <body>
@@ -238,6 +443,55 @@
                 </div>
             </div>
             
+            <!-- Değişiklik ve Fark Radarı (Efektif Tek Panel) -->
+            <div class="radar-panel" id="radarPanel">
+                <div class="radar-header">
+                    <div class="radar-title">
+                        <span>📡 Değişiklik & Fark Radarı</span>
+                        <span style="font-size: 0.85rem; font-weight: normal; color: #64748b;">(Bir Önceki Çalıştırmaya Göre)</span>
+                    </div>
+                    <div class="radar-actions">
+                        <span class="radar-last-check" id="radarLastCheck">Son Kontrol: Yükleniyor...</span>
+                        <button class="btn btn-warning" onclick="manualCheckChanges()" id="refreshChangesBtn" style="padding: 8px 16px; font-size: 0.9rem;">
+                            🔄 Değişiklikleri Tara
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Efektif Filtreleme Rozetleri (Segmented Chips) -->
+                <div class="radar-filter-bar">
+                    <button class="filter-chip active" onclick="filterChanges('all', this)">
+                        <span>Tüm Farklar</span>
+                        <span class="chip-count" id="countAll">0</span>
+                    </button>
+                    <button class="filter-chip chip-new" onclick="filterChanges('new_programs', this)">
+                        <span>🟢 Yeni Eklenen Programlar</span>
+                        <span class="chip-count" id="countNewPrograms">0</span>
+                    </button>
+                    <button class="filter-chip chip-removed" onclick="filterChanges('removed_programs', this)">
+                        <span>🔴 Yayından Kalkan / Silinen</span>
+                        <span class="chip-count" id="countRemovedPrograms">0</span>
+                    </button>
+                    <button class="filter-chip chip-modified" onclick="filterChanges('modified_programs', this)">
+                        <span>🟡 Başvuru Şartı Değişen</span>
+                        <span class="chip-count" id="countModifiedPrograms">0</span>
+                    </button>
+                    <button class="filter-chip chip-active-new" onclick="filterChanges('new_active_calls', this)">
+                        <span>🚀 Yeni Açılan Aktif Çağrılar</span>
+                        <span class="chip-count" id="countNewActiveCalls">0</span>
+                    </button>
+                    <button class="filter-chip chip-active-closed" onclick="filterChanges('closed_active_calls', this)">
+                        <span>⏳ Süresi Dolan / Kapanan</span>
+                        <span class="chip-count" id="countClosedActiveCalls">0</span>
+                    </button>
+                </div>
+
+                <!-- Değişiklik Maddeleri Listesi -->
+                <div class="radar-list" id="radarList">
+                    <!-- Dinamik JavaScript ile doldurulacak -->
+                </div>
+            </div>
+
             <div class="status-panel">
                 <h3>📊 Sistem Durumu</h3>
                 <div class="status-grid">
@@ -289,13 +543,228 @@
     
     <script>
         let isSchedulerRunning = false;
+        let currentChangesData = null;
+        let currentFilter = 'all';
         
         // Sayfa yüklendiğinde durumu kontrol et
         window.onload = function() {
             updateStatus();
             updateSchedulerTimes();
+            loadChanges();
             setInterval(updateStatus, 30000); // Her 30 saniyede durumu güncelle
+            setInterval(loadChanges, 60000);  // Her dakikada bir değişiklikleri tazele
         };
+
+        // Değişiklik raporunu API'den yükler
+        async function loadChanges() {
+            try {
+                const response = await fetch('/api/changes');
+                if (!response.ok) return;
+                const data = await response.json();
+                currentChangesData = data;
+
+                // Sayaçları güncelle
+                const s = data.summary || {};
+                document.getElementById('countAll').textContent = s.total_changes || 0;
+                document.getElementById('countNewPrograms').textContent = s.new_programs_count || 0;
+                document.getElementById('countRemovedPrograms').textContent = s.removed_programs_count || 0;
+                document.getElementById('countModifiedPrograms').textContent = s.modified_programs_count || 0;
+                document.getElementById('countNewActiveCalls').textContent = s.new_active_calls_count || 0;
+                document.getElementById('countClosedActiveCalls').textContent = s.closed_active_calls_count || 0;
+
+                // Son kontrol saatini güncelle
+                if (data.last_check_date) {
+                    document.getElementById('radarLastCheck').textContent = 'Son Kontrol: ' + data.last_check_date;
+                }
+
+                // Listeyi çiz
+                renderChanges();
+            } catch (err) {
+                console.error('Değişiklik raporu yüklenemedi:', err);
+            }
+        }
+
+        // Filtre rozetine tıklandığında
+        function filterChanges(category, element) {
+            currentFilter = category;
+            
+            // Aktif buton stilini güncelle
+            document.querySelectorAll('.filter-chip').forEach(btn => btn.classList.remove('active'));
+            if (element) {
+                element.classList.add('active');
+            }
+
+            renderChanges();
+        }
+
+        // Değişiklik listesini render eder
+        function renderChanges() {
+            const container = document.getElementById('radarList');
+            if (!container) return;
+
+            if (!currentChangesData) {
+                container.innerHTML = '<div class="empty-changes"><h4>Veriler yükleniyor...</h4></div>';
+                return;
+            }
+
+            let items = [];
+
+            if (currentFilter === 'all' || currentFilter === 'new_programs') {
+                (currentChangesData.new_programs || []).forEach(p => {
+                    items.push({
+                        type: 'new_program',
+                        categoryClass: 'card-new',
+                        badgeClass: 'badge-new',
+                        badgeText: '🟢 Yeni Program Eklendi',
+                        title: p.program_name,
+                        url: p.url,
+                        desc: p.applicant_requirements || 'Başvuru koşulları henüz detaylandırılmadı.',
+                        date: p.detected_at || currentChangesData.last_check_date
+                    });
+                });
+            }
+
+            if (currentFilter === 'all' || currentFilter === 'removed_programs') {
+                (currentChangesData.removed_programs || []).forEach(p => {
+                    items.push({
+                        type: 'removed_program',
+                        categoryClass: 'card-removed',
+                        badgeClass: 'badge-removed',
+                        badgeText: '🔴 Yayından Kalkan / Silinen',
+                        title: p.program_name,
+                        url: p.url,
+                        desc: 'Bu destek programı artık TÜBİTAK Ulusal Destek Programları ana sayfasında yer almıyor.',
+                        date: p.detected_at || currentChangesData.last_check_date
+                    });
+                });
+            }
+
+            if (currentFilter === 'all' || currentFilter === 'modified_programs') {
+                (currentChangesData.modified_programs || []).forEach(p => {
+                    items.push({
+                        type: 'modified_program',
+                        categoryClass: 'card-modified',
+                        badgeClass: 'badge-modified',
+                        badgeText: '🟡 Başvuru Şartı Değişti',
+                        title: p.program_name,
+                        url: p.url,
+                        oldReq: p.old_requirements,
+                        newReq: p.new_requirements,
+                        desc: 'TÜBİTAK bu programın başvuru şartları metninde güncelleme yaptı.',
+                        date: p.detected_at || currentChangesData.last_check_date
+                    });
+                });
+            }
+
+            if (currentFilter === 'all' || currentFilter === 'new_active_calls') {
+                (currentChangesData.new_active_calls || []).forEach(c => {
+                    items.push({
+                        type: 'new_active',
+                        categoryClass: 'card-active-new',
+                        badgeClass: 'badge-active-new',
+                        badgeText: '🚀 Yeni Aktif Çağrı Açıldı',
+                        title: c.name,
+                        url: c.url,
+                        desc: 'TÜBİTAK portalında yeni bir aktif başvuru çağrısı duyuruldu.',
+                        date: c.found_date || c.detected_at || currentChangesData.last_check_date
+                    });
+                });
+            }
+
+            if (currentFilter === 'all' || currentFilter === 'closed_active_calls') {
+                (currentChangesData.closed_active_calls || []).forEach(c => {
+                    items.push({
+                        type: 'closed_active',
+                        categoryClass: 'card-active-closed',
+                        badgeClass: 'badge-active-closed',
+                        badgeText: '⏳ Süresi Dolan / Kapanan Çağrı',
+                        title: c.name,
+                        url: c.url,
+                        desc: 'Bu çağrının başvuru süresi tamamlandı ve aktif çağrılar listesinden kaldırıldı.',
+                        date: c.closed_date || c.detected_at || currentChangesData.last_check_date
+                    });
+                });
+            }
+
+            if (items.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-changes">
+                        <h4>🎉 Bu kategoride herhangi bir değişiklik bulunmuyor</h4>
+                        <p>Bir önceki çalıştırmadan bu yana TÜBİTAK listelerinde bir fark tespit edilmedi.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = '';
+            items.forEach(item => {
+                let diffHtml = '';
+                if (item.type === 'modified_program' && item.oldReq && item.newReq) {
+                    diffHtml = `
+                        <div class="diff-container">
+                            <div class="diff-box diff-old">
+                                <div class="diff-title">Önceki Şartlar:</div>
+                                <div>${escapeHtml(item.oldReq.slice(0, 300))}${item.oldReq.length > 300 ? '...' : ''}</div>
+                            </div>
+                            <div class="diff-box diff-new">
+                                <div class="diff-title">Yeni Şartlar:</div>
+                                <div>${escapeHtml(item.newReq.slice(0, 300))}${item.newReq.length > 300 ? '...' : ''}</div>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                const urlBtn = item.url ? `<a href="${item.url}" target="_blank" style="color: #2563eb; text-decoration: underline; font-size: 0.85rem; margin-left: 10px;">TÜBİTAK Sayfasına Git ↗</a>` : '';
+
+                html += `
+                    <div class="change-card ${item.categoryClass}">
+                        <div class="change-top">
+                            <span class="change-badge ${item.badgeClass}">${item.badgeText}</span>
+                            <span style="font-size: 0.8rem; color: #94a3b8;">🕒 ${item.date || ''}</span>
+                        </div>
+                        <div class="change-name">
+                            ${escapeHtml(item.title)}
+                            ${urlBtn}
+                        </div>
+                        <div class="change-desc">${escapeHtml(item.desc)}</div>
+                        ${diffHtml}
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        // Kullanıcı butona bastığında anlık kontrol yap
+        async function manualCheckChanges() {
+            const btn = document.getElementById('refreshChangesBtn');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '⏳ Taranıyor...';
+            btn.disabled = true;
+
+            try {
+                const response = await fetch('/api/check-changes', { method: 'POST' });
+                const data = await response.json();
+                if (response.ok) {
+                    showAlert('TÜBİTAK değişiklik kontrolü tamamlandı!', 'success');
+                    await loadChanges();
+                } else {
+                    showAlert('Hata: ' + data.detail, 'error');
+                }
+            } catch (err) {
+                showAlert('Hata: ' + err.message, 'error');
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
         
         async function updateStatus() {
             try {

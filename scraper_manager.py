@@ -125,12 +125,23 @@ def scrape_tubitak_data():
         rag_data["programs"].append(program_data)
         time.sleep(2)
 
+    from change_tracker import backup_before_rag_update, get_current_changes
+
+    # Mevcut veriyi bir önceki çalıştırma olarak yedekle
+    backup_before_rag_update()
+
     # JSON dosyasına kaydet
     with open("tubitak_rag_data.json", "w", encoding="utf-8") as f:
         json.dump(rag_data, f, ensure_ascii=False, indent=2)
 
     print(f"\n✅ JSON dosyası 'tubitak_rag_data.json' olarak kaydedildi.")
     print("✅ Tüm çağrılar işlendi.")
+
+    # Değişiklik raporunu güncelle
+    try:
+        get_current_changes()
+    except Exception as e:
+        print(f"Değişiklik raporu güncellenemedi: {e}")
 
     return rag_data
 

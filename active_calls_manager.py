@@ -133,12 +133,23 @@ def scrape_active_calls():
 
         rag_data["programs"].append(program_data)
 
+    from change_tracker import backup_before_active_update, get_current_changes
+
+    # Mevcut veriyi bir önceki çalıştırma olarak yedekle
+    backup_before_active_update()
+
     # JSON dosyasına kaydet
     with open("active_calls_data.json", "w", encoding="utf-8") as f:
         json.dump(rag_data, f, ensure_ascii=False, indent=2)
 
     print(f"\n✅ Aktif çağrılar 'active_calls_data.json' dosyasına kaydedildi.")
     print(f"✅ Toplam {len(rag_data['programs'])} çağrı işlendi.")
+
+    # Değişiklik raporunu güncelle
+    try:
+        get_current_changes()
+    except Exception as e:
+        print(f"Aktif çağrı değişiklik raporu güncellenemedi: {e}")
 
     return rag_data
 

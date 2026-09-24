@@ -282,6 +282,28 @@ async def get_results():
         raise HTTPException(status_code=500, detail=f"Sonuçlar alınırken hata: {str(e)}")
 
 
+@app.get("/api/changes")
+async def get_changes():
+    """TÜBİTAK program ve aktif çağrı değişiklik raporunu döndürür."""
+    from change_tracker import get_current_changes
+    try:
+        report = get_current_changes()
+        return report
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Değişiklik raporu alınırken hata: {str(e)}")
+
+
+@app.post("/api/check-changes")
+async def check_changes():
+    """TÜBİTAK sayfasını anlık tarayarak değişiklikleri kontrol eder ve raporu günceller."""
+    from change_tracker import run_quick_diff_check
+    try:
+        report = run_quick_diff_check()
+        return {"message": "Değişiklik kontrolü tamamlandı", "report": report}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Değişiklik kontrolü sırasında hata: {str(e)}")
+
+
 if __name__ == "__main__":
     import uvicorn
 
